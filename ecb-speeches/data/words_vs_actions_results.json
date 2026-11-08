@@ -1,0 +1,139 @@
+{
+  "decisions": 63,
+  "hikes": 30,
+  "cuts": 33,
+  "turning_points": 9,
+  "turning_points_warned": 6,
+  "turning_points_assessable": 8,
+  "all_decisions_warned": 41,
+  "all_decisions_assessable": 55,
+  "momentum_baseline_hits": 53,
+  "momentum_baseline_n": 62,
+  "corr_tone_next3": 0.29,
+  "corr_tone_past3": 0.501,
+  "best_lead": {
+    "lead_months": -4,
+    "corr": 0.513
+  },
+  "lead_lag_profile": [
+    {
+      "lead_months": -12,
+      "corr": 0.263
+    },
+    {
+      "lead_months": -11,
+      "corr": 0.289
+    },
+    {
+      "lead_months": -10,
+      "corr": 0.32
+    },
+    {
+      "lead_months": -9,
+      "corr": 0.357
+    },
+    {
+      "lead_months": -8,
+      "corr": 0.368
+    },
+    {
+      "lead_months": -7,
+      "corr": 0.396
+    },
+    {
+      "lead_months": -6,
+      "corr": 0.435
+    },
+    {
+      "lead_months": -5,
+      "corr": 0.482
+    },
+    {
+      "lead_months": -4,
+      "corr": 0.513
+    },
+    {
+      "lead_months": -3,
+      "corr": 0.501
+    },
+    {
+      "lead_months": -2,
+      "corr": 0.459
+    },
+    {
+      "lead_months": -1,
+      "corr": 0.369
+    },
+    {
+      "lead_months": 0,
+      "corr": 0.29
+    },
+    {
+      "lead_months": 1,
+      "corr": 0.223
+    },
+    {
+      "lead_months": 2,
+      "corr": 0.196
+    },
+    {
+      "lead_months": 3,
+      "corr": 0.17
+    },
+    {
+      "lead_months": 4,
+      "corr": 0.159
+    },
+    {
+      "lead_months": 5,
+      "corr": 0.147
+    },
+    {
+      "lead_months": 6,
+      "corr": 0.144
+    },
+    {
+      "lead_months": 7,
+      "corr": 0.135
+    },
+    {
+      "lead_months": 8,
+      "corr": 0.128
+    },
+    {
+      "lead_months": 9,
+      "corr": 0.129
+    },
+    {
+      "lead_months": 10,
+      "corr": 0.139
+    },
+    {
+      "lead_months": 11,
+      "corr": 0.135
+    },
+    {
+      "lead_months": 12,
+      "corr": 0.133
+    }
+  ],
+  "r2_past_moves_only": 0.371,
+  "r2_with_tone": 0.371,
+  "hawkish_months": 42,
+  "hawkish_false_alarms": 27,
+  "dovish_months": 47,
+  "dovish_false_alarms": 22,
+  "tone_gap_thresholds": [
+    -0.284,
+    0.332
+  ],
+  "turning_points_expected_by_chance": 4.0,
+  "turning_points_p_value": 0.145,
+  "base_rate_hike_6m": 0.246,
+  "hike_6m_after_hawkish": 0.319,
+  "base_rate_cut_6m": 0.32,
+  "cut_6m_after_dovish": 0.532,
+  "latest_month": "2026-10",
+  "latest_tone_gap": 0.25,
+  "latest_policy_rate": 2.5
+}
