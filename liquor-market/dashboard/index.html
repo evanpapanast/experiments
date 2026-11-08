@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iowa spirits market: management report | Evangelos Papanastasis</title>
+<meta name="description" content="Management report on the Iowa spirits market: price vs volume, budget vs actual, forecast and 2027 budget, built with BigQuery.">
+<style>
+  .viz-root {
+    color-scheme: light;
+    --page: #f4f6fa; --surface-1: #ffffff; --border: rgba(11,11,11,0.08);
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e7e6e1; --axis: #c3c2b7;
+    --blue: #2a78d6; --orange: #eb6834; --aqua: #1baf7a; --yellow: #eda100; --red: #e34948; --violet: #6250d6; --magenta: #e87ba4;
+    --up: #0ca30c; --down: #d03b3b; --ink: #0b0b0b;
+    --wash-blue: rgba(42,120,214,0.10); --wash-orange: rgba(235,104,52,0.10); --wash-aqua: rgba(27,175,122,0.12);
+    --wash-red: rgba(227,73,72,0.10); --wash-yellow: rgba(237,161,0,0.14);
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --border: rgba(255,255,255,0.10);
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --axis: #383835;
+      --blue: #3987e5; --orange: #d95926; --aqua: #199e70; --yellow: #c98500; --red: #e66767; --violet: #9085e9; --magenta: #d55181;
+      --up: #0ca30c; --down: #e66767; --ink: #f0efec;
+      --wash-blue: rgba(57,135,229,0.16); --wash-orange: rgba(217,89,38,0.16); --wash-aqua: rgba(25,158,112,0.18);
+      --wash-red: rgba(230,103,103,0.16); --wash-yellow: rgba(201,133,0,0.18);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page); color: var(--text-primary); min-height: 100vh; line-height: 1.45; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 20px 48px; }
+  header h1 { font-size: 27px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+  .meta { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; }
+  .meta a { color: inherit; }
+  nav { display: flex; gap: 6px; flex-wrap: wrap; margin: 20px 0 18px; }
+  nav button { font: inherit; font-size: 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 999px;
+               padding: 8px 16px; cursor: pointer; color: var(--text-secondary); }
+  nav button[aria-selected="true"] { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(12, 1fr); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; min-width: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-7 { grid-column: span 7; } .span-6 { grid-column: span 6; }
+  .span-5 { grid-column: span 5; } .span-4 { grid-column: span 4; } .span-3 { grid-column: span 3; }
+  @media (max-width: 880px) { .span-8, .span-7, .span-6, .span-5, .span-4 { grid-column: span 12; } .span-3 { grid-column: span 6; } }
+  .card-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+  .card h2 { font-size: 16px; margin: 0; font-weight: 650; }
+  .card .sub { font-size: 13px; color: var(--text-secondary); margin: 3px 0 0; }
+  button.tbl { font: inherit; font-size: 12px; color: var(--text-secondary); background: none; border: 1px solid var(--axis); border-radius: 6px; padding: 3px 8px; cursor: pointer; white-space: nowrap; }
+  .tile { border-top: 4px solid var(--c, var(--blue)); }
+  .tile .label { font-size: 13px; color: var(--text-secondary); }
+  .tile .value { font-size: 30px; font-weight: 700; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+  .tile .delta { font-size: 13px; color: var(--text-secondary); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: 12.5px; border-radius: 999px; padding: 1px 8px; }
+  .pill.up { color: var(--up); background: rgba(12,163,12,0.12); } .pill.down { color: var(--down); background: rgba(208,59,59,0.12); }
+  .list { margin: 0; padding-left: 20px; font-size: 14.5px; }
+  .list li { margin: 7px 0; }
+  .actions { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .action { border-radius: 12px; padding: 12px 14px 12px 14px; background: var(--w); border-left: 5px solid var(--c); font-size: 14px; color: var(--text-secondary); }
+  .action b { display: block; color: var(--text-primary); font-size: 14.5px; margin-bottom: 3px; }
+  .action .n { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--c); color: #fff; font-weight: 700; font-size: 12px;
+               align-items: center; justify-content: center; margin-right: 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--text-secondary); margin: 2px 0 8px; align-items: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .key-rect { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .key-line { width: 16px; height: 3px; border-radius: 2px; display: inline-block; }
+  .key-dash { width: 16px; height: 0; border-top: 2px dashed; display: inline-block; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 650; border-radius: 999px; padding: 2px 9px; color: #fff; white-space: nowrap; }
+  .seg { display: inline-flex; border: 1px solid var(--axis); border-radius: 8px; overflow: hidden; }
+  .seg button { font: inherit; font-size: 13px; border: 0; background: none; padding: 6px 12px; cursor: pointer; color: var(--text-secondary); }
+  .seg button[aria-pressed="true"] { background: var(--blue); color: #fff; font-weight: 600; }
+  svg text { font-family: inherit; }
+  .axis-text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .lbl { fill: var(--text-primary); font-size: 12px; }
+  .lbl-b { fill: var(--text-primary); font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .lbl-2 { fill: var(--text-secondary); font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th { font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+  .scroll { overflow-x: auto; }
+  .note { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; }
+  #tip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--border);
+         border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.14); display: none; min-width: 160px; max-width: 300px; }
+  #tip .t { color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
+  #tip .r { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  #tip .r b { font-variant-numeric: tabular-nums; }
+  .sliders { display: grid; gap: 14px; }
+  .slider label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary); }
+  .slider label b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .slider input { width: 100%; accent-color: var(--blue); }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets button { font: inherit; font-size: 12.5px; border: 1px solid var(--axis); background: var(--surface-1); border-radius: 999px; padding: 4px 11px; cursor: pointer; color: var(--text-secondary); }
+  .presets button.on { border-color: var(--blue); color: var(--blue); font-weight: 650; }
+  .big { font-size: 34px; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .about p, .about li { font-size: 14px; color: var(--text-secondary); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <header>
+    <h1>Iowa spirits market: where sales are going and what to do</h1>
+    <p>A management report: what drove sales, how they compared with budget, and what to plan for <span class="y-next"></span>.</p>
+    <div class="meta">Data: <span id="m-src"></span>, up to <span id="m-last"></span> · Built in Google BigQuery ·
+      Totals only: no store, supplier or product names · <a href="https://github.com/evanpapanast/experiments/tree/main/liquor-market">Code on GitHub</a></div>
+  </header>
+
+  <nav role="tablist" aria-label="Report pages">
+    <button role="tab" data-tab="sum" aria-selected="true">Summary</button>
+    <button role="tab" data-tab="pv" aria-selected="false">Price or volume?</button>
+    <button role="tab" data-tab="bva" aria-selected="false">Budget vs actual</button>
+    <button role="tab" data-tab="fc" aria-selected="false">Forecast &amp; budget</button>
+    <button role="tab" data-tab="about" aria-selected="false">About the data</button>
+  </nav>
+
+  <!-- SUMMARY -->
+  <section data-page="sum" class="grid">
+    <div class="card tile span-3" style="--c: var(--blue)"><div class="label" id="k1l"></div><div class="value" id="k1"></div><div class="delta" id="k1d"></div></div>
+    <div class="card tile span-3" style="--c: var(--orange)"><div class="label">Litres sold</div><div class="value" id="k2"></div><div class="delta" id="k2d"></div></div>
+    <div class="card tile span-3" style="--c: var(--aqua)"><div class="label" id="k3l"></div><div class="value" id="k3"></div><div class="delta" id="k3d"></div></div>
+    <div class="card tile span-3" style="--c: var(--violet)"><div class="label" id="k4l"></div><div class="value" id="k4"></div><div class="delta" id="k4d"></div></div>
+    <div class="card span-7">
+      <div class="card-head"><div><h2>Sales by year</h2><p class="sub" id="yr-sub"></p></div><button class="tbl" data-table="yr">Show table</button></div>
+      <div class="legend" id="yr-legend"></div>
+      <div id="yr-chart"></div><div id="yr-table" hidden class="scroll"></div>
+    </div>
+    <div class="card span-5">
+      <h2>What happened</h2>
+      <ul class="list" id="happened"></ul>
+    </div>
+    <div class="card span-12">
+      <h2 style="margin-bottom:12px">What to do next</h2>
+      <div class="actions" id="actions"></div>
+    </div>
+  </section>
+
+  <!-- PRICE OR VOLUME -->
+  <section data-page="pv" class="grid" hidden>
+    <div class="card span-12">
+      <div class="card-head">
+        <div><h2>Why did sales change?</h2><p class="sub">Sales change split into three parts. <b>Volume</b>: more or fewer litres. <b>Mix</b>: selling more of the dearer or cheaper drinks. <b>Price</b>: higher or lower price per litre.</p></div>
+        <div class="seg" role="group" aria-label="Period"><button data-br="fy" aria-pressed="true"></button><button data-br="ytd" aria-pressed="false"></button></div>
+      </div>
+      <div id="wf-chart"></div>
+      <p class="note" id="wf-note"></p>
+    </div>
+    <div class="card span-6">
+      <div class="card-head"><div><h2>Product families: volume vs price</h2><p class="sub" id="q-sub"></p></div></div>
+      <div class="legend" id="q-legend"></div>
+      <div id="q-chart"></div>
+    </div>
+    <div class="card span-6">
+      <div class="card-head"><div><h2>Sales change by family</h2><p class="sub" id="fb-sub"></p></div><button class="tbl" data-table="fam">Show table</button></div>
+      <div id="fb-chart"></div>
+      <div id="fam-table" hidden class="scroll"></div>
+    </div>
+    <div class="card span-12">
+      <h2>What to do, family by family</h2>
+      <div class="scroll" id="act-table"></div>
+    </div>
+  </section>
+
+  <!-- BUDGET VS ACTUAL -->
+  <section data-page="bva" class="grid" hidden>
+    <div class="card span-12 about"><h2>How good was the budget?</h2><p id="bva-intro"></p></div>
+    <div class="card tile span-4" style="--c: var(--blue)"><div class="label">Budget</div><div class="value" id="b1"></div><div class="delta" id="b1d"></div></div>
+    <div class="card tile span-4" style="--c: var(--orange)"><div class="label">Actual</div><div class="value" id="b2"></div><div class="delta" id="b2d"></div></div>
+    <div class="card tile span-4" style="--c: var(--red)"><div class="label">Gap to budget</div><div class="value" id="b3"></div><div class="delta" id="b3d"></div></div>
+    <div class="card span-6">
+      <div class="card-head"><div><h2>Budget vs actual, month by month</h2><p class="sub">Sales in $ million</p></div><button class="tbl" data-table="bm">Show table</button></div>
+      <div class="legend" id="bm-legend"></div>
+      <div id="bm-chart"></div><div id="bm-table" hidden class="scroll"></div>
+    </div>
+    <div class="card span-6">
+      <div class="card-head"><div><h2>From budget to actual</h2><p class="sub">Where the gap came from</p></div></div>
+      <div id="bw-chart"></div>
+    </div>
+    <div class="card span-12">
+      <div class="card-head"><div><h2>Gap to budget by family</h2><p class="sub">Green = above budget, red = below. Hover to see how much is volume and how much is price.</p></div><button class="tbl" data-table="bf">Show table</button></div>
+      <div id="bf-chart"></div><div id="bf-table" hidden class="scroll"></div>
+    </div>
+  </section>
+
+  <!-- FORECAST & BUDGET -->
+  <section data-page="fc" class="grid" hidden>
+    <div class="card span-12">
+      <div class="card-head"><div><h2>Monthly sales: actual, forecast and old budget</h2><p class="sub" id="fc-sub"></p></div><button class="tbl" data-table="fcm">Show table</button></div>
+      <div class="legend" id="fc-legend"></div>
+      <div id="fc-chart"></div><div id="fcm-table" hidden class="scroll"></div>
+    </div>
+    <div class="card span-5">
+      <h2>Build the <span class="y-next"></span> budget</h2>
+      <p class="sub" style="margin-bottom:12px">Pick a starting point, then adjust. Changes are per year, compared with the year before.</p>
+      <div class="presets" id="presets"></div>
+      <div class="sliders" style="margin-top:14px">
+        <div class="slider"><label for="sv">Litres sold (volume) <b id="sv-v"></b></label><input type="range" id="sv" min="-10" max="5" step="0.1"></div>
+        <div class="slider"><label for="sp">Price per litre <b id="sp-v"></b></label><input type="range" id="sp" min="-3" max="6" step="0.1"></div>
+      </div>
+      <p class="note" id="sc-note"></p>
+    </div>
+    <div class="card span-7">
+      <div class="grid" style="gap:12px">
+        <div class="span-6" style="grid-column: span 6"><div class="label" style="font-size:13px;color:var(--text-secondary)">Expected <span class="y-cur"></span></div><div class="big" id="o1"></div><div class="delta" id="o1d"></div></div>
+        <div class="span-6" style="grid-column: span 6"><div class="label" style="font-size:13px;color:var(--text-secondary)">Budget <span class="y-next"></span></div><div class="big" style="color:var(--blue)" id="o2"></div><div class="delta" id="o2d"></div></div>
+      </div>
+      <div class="legend" style="margin-top:12px" id="sc-legend"></div>
+      <div id="sc-chart"></div>
+    </div>
+    <div class="card span-12">
+      <div class="card-head"><div><h2>The <span class="y-next"></span> budget, month by month</h2><p class="sub">The yearly budget split by the usual share of each month (average of 2017 to <span class="y-fy"></span>). Use it for stock and cash planning.</p></div><button class="tbl" data-table="ph">Show table</button></div>
+      <div id="ph-chart"></div><div id="ph-table" hidden class="scroll"></div>
+    </div>
+    <div class="card span-12">
+      <div class="card-head"><div><h2>Budget <span class="y-next"></span> by family</h2><p class="sub">Two views side by side: if this year's trend continues, and what the forecast model says.</p></div></div>
+      <div class="scroll" id="fb-table2"></div>
+      <p class="note">Each family follows its own trend here, so the family total differs slightly from the headline. The model can be misled by past one-off peaks in small families (for example gift packs); use judgement there.</p>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section data-page="about" class="grid about" hidden>
+    <div class="card span-12">
+      <h2>The business question</h2>
+      <p>For a company selling spirits in Iowa: are sales growing because people buy more, or only because prices rise? How good was the budget? What should we plan for next year, and where should we act?</p>
+      <h2>The data</h2>
+      <p>Every bottle of spirits that Iowa stores buy goes through the state, which publishes each order. <span id="ab-rows"></span>
+         Source: Iowa Department of Revenue, Alcohol Operations Bureau, <i>Iowa Liquor Sales</i>, licensed under
+         <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>; read from the Google BigQuery public datasets.
+         Store, supplier and product names are in the source but are not kept: the report uses totals by product family and month only.</p>
+      <h2>How it was built</h2>
+      <ul>
+        <li><b>BigQuery</b>: the 44 detailed categories are grouped into 11 product families; a monthly table is built straight from the public data and checked against it (sales, litres and order lines match exactly).</li>
+        <li><b>Price, volume and mix</b>: price = sales per litre. Volume effect = change in litres at last year's average price; mix = effect of selling more of the dearer or cheaper families; price = change in price per litre within each family.</li>
+        <li><b>Forecast</b>: BigQuery's built-in TimesFM model (<code>AI.FORECAST</code>), one forecast per family for sales and for litres. The "budget" is the forecast made with data up to December of the last full year, so it can be tested against what really happened.</li>
+        <li><b>Gross margin</b>: <span id="ab-margin"></span></li>
+        <li><b>Cost</b>: all work fits in BigQuery's free tier (the largest query read about 2 GB; the free tier is 1 TB a month).</li>
+      </ul>
+      <h2>Limits</h2>
+      <ul>
+        <li>These are sales from the state to stores, not from stores to shoppers. They show what stores order, which follows what shoppers buy with a short delay.</li>
+        <li>The forecast model learns from past patterns. It was too optimistic this year; treat it as the top of the range.</li>
+        <li>The data is updated monthly with a delay; the latest month in this report is <span id="ab-last"></span>.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+<div id="tip" role="tooltip"></div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(() => {
+const L = window.LIQ, K = L.kpi, Mt = L.meta;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const NS = "http://www.w3.org/2000/svg";
+const css = v => getComputedStyle($(".viz-root")).getPropertyValue(v).trim();
+const fmt = (x, d = 0) => x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const M = (x, d = 1) => (x < 0 ? "−" : "") + "$" + fmt(Math.abs(x) / 1e6, d) + "m";
+const Ms = (x, d = 1) => (x >= 0 ? "+" : "−") + "$" + fmt(Math.abs(x) / 1e6, d) + "m";
+const P = (x, d = 1) => (x >= 0 ? "+" : "−") + fmt(Math.abs(x), d) + "%";
+const pill = x => `<span class="pill ${x >= 0 ? "up" : "down"}">${x >= 0 ? "▲" : "▼"} ${P(x)}</span>`;
+const mon = m => new Date(m + "-01").toLocaleDateString("en-US", { month: "short", year: "numeric" });
+const monS = m => new Date(m + "-01").toLocaleDateString("en-US", { month: "short" });
+function el(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (parent) parent.appendChild(e); return e; }
+function txt(p, x, y, s, cls, anchor = "start", extra = {}) { const t = el("text", { x, y, class: cls, "text-anchor": anchor, ...extra }, p); t.textContent = s; return t; }
+const tip = $("#tip");
+function showTip(ev, html) { tip.innerHTML = html; tip.style.display = "block"; const r = tip.getBoundingClientRect();
+  let x = ev.clientX + 14, y = ev.clientY + 14; if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px"; }
+const hideTip = () => { tip.style.display = "none"; };
+function hover(node, html) { node.addEventListener("mousemove", ev => showTip(ev, typeof html === "function" ? html() : html)); node.addEventListener("mouseleave", hideTip); }
+function table(cols, rows) { return `<table><thead><tr>${cols.map(c => `<th class="${c.num ? "num" : ""}">${c.h}</th>`).join("")}</tr></thead><tbody>` +
+  rows.map(r => `<tr>${r.map((v, i) => `<td class="${cols[i].num ? "num" : ""}">${v}</td>`).join("")}</tr>`).join("") + "</tbody></table>"; }
+$$("button.tbl[data-table]").forEach(b => b.addEventListener("click", () => { const t = $("#" + b.dataset.table + "-table"); t.hidden = !t.hidden; b.textContent = t.hidden ? "Show table" : "Hide table"; }));
+function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), f = x / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+const STC = { steady: "--aqua", price: "--yellow", losing: "--red" };
+const chip = s => `<span class="chip" style="background:${css(STC[s])};${s === "price" ? "color:#0b0b0b" : ""}">${L.status[s].label}</span>`;
+
+// ---------- header ----------
+const yCur = Mt.last_year, yNext = Mt.last_year + 1, yFy = Mt.fy;
+$$(".y-next").forEach(e => e.textContent = yNext); $$(".y-cur").forEach(e => e.textContent = yCur); $$(".y-fy").forEach(e => e.textContent = yFy);
+$("#m-src").textContent = L.meta.source; $("#m-last").textContent = mon(Mt.last_month);
+$("#ab-last").textContent = mon(Mt.last_month); $("#ab-margin").textContent = Mt.margin_note;
+$("#ab-rows").textContent = `This report uses ${fmt(L.months.length)} months, from ${mon(L.months[0])} to ${mon(Mt.last_month)}: ${M(L.month_sales.reduce((a, b) => a + b, 0), 0)} of sales in total.`;
+
+// ---------- summary ----------
+$("#k1l").textContent = `Sales ${yFy}`; $("#k1").textContent = M(K.sales_fy);
+$("#k1d").innerHTML = `${pill((K.sales_fy / K.sales_prev - 1) * 100)} vs ${yFy - 1}`;
+$("#k2").textContent = fmt(K.liters_fy / 1e6, 1) + "m";
+$("#k2d").innerHTML = `${pill((K.liters_fy / K.liters_prev - 1) * 100)} vs ${yFy - 1}`;
+$("#k3l").textContent = `Sales ${Mt.ytd_label}`; $("#k3").textContent = M(K.ytd_sales);
+$("#k3d").innerHTML = `${pill(K.ytd_sales_pct)} vs same months ${yFy}`;
+$("#k4l").textContent = `vs budget, ${Mt.ytd_label}`; $("#k4").textContent = P(K.bva_pct);
+$("#k4d").textContent = `actual sales against the forecast-based budget`;
+$("#happened").innerHTML = L.what_happened.map(s => `<li>${s}</li>`).join("");
+const ACOL = [["--blue", "--wash-blue"], ["--orange", "--wash-orange"], ["--aqua", "--wash-aqua"], ["--yellow", "--wash-yellow"], ["--red", "--wash-red"], ["--violet", "--wash-blue"]];
+$("#actions").innerHTML = L.actions.map((a, i) => `<div class="action" style="--c:var(${ACOL[i % 6][0]});--w:var(${ACOL[i % 6][1]})"><b><span class="n">${i + 1}</span>${a.h}</b>${a.t}</div>`).join("");
+
+function drawYears() {
+  const host = $("#yr-chart"); host.innerHTML = "";
+  const W = Math.max(320, host.clientWidth), H = 280, m = { l: 48, r: 10, t: 22, b: 28 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = el("svg", { width: W, height: H, role: "img", "aria-label": "Sales by year" }, host);
+  const S = L.scenarios, ys = L.years.filter(y => y <= yFy);
+  const rows = ys.map(y => ({ y: String(y), v: L.year_sales[L.years.indexOf(y)], kind: "actual" }))
+    .concat([{ y: String(yCur), v: S.trend_cur, hi: S.model_cur, kind: "expected" }, { y: String(yNext), v: S.trend_next, hi: S.model_next, kind: "budget" }]);
+  const maxV = Math.max(...rows.map(r => r.hi || r.v)), st = niceStep(maxV / 4), yMax = Math.ceil(maxV / st) * st;
+  const Y = v => m.t + ih - v / yMax * ih, bw = iw / rows.length;
+  for (let v = 0; v <= yMax; v += st) { el("line", { x1: m.l, x2: m.l + iw, y1: Y(v), y2: Y(v), stroke: css("--grid") }, svg); txt(svg, m.l - 6, Y(v) + 4, "$" + fmt(v / 1e6) + "m", "axis-text", "end"); }
+  rows.forEach((r, i) => {
+    const x = m.l + i * bw + bw * 0.18, w = bw * 0.64;
+    const col = r.kind === "actual" ? (r.y === String(L.years[L.year_sales.indexOf(Math.max(...L.year_sales))]) ? css("--blue") : css("--blue")) : css("--orange");
+    if (r.hi) {
+      el("rect", { x, y: Y(r.hi), width: w, height: Y(0) - Y(r.hi), rx: 4, fill: "none", stroke: col, "stroke-width": 1.5, "stroke-dasharray": "4 3" }, svg);
+      el("rect", { x, y: Y(r.v), width: w, height: Y(0) - Y(r.v), rx: 4, fill: col, opacity: 0.85 }, svg);
+    } else el("rect", { x, y: Y(r.v), width: w, height: Y(0) - Y(r.v), rx: 4, fill: col }, svg);
+    txt(svg, x + w / 2, H - 8, r.y, "axis-text", "middle");
+    if (r.hi) {
+      txt(svg, x + w / 2, Y(r.hi) - 6, fmt(r.hi / 1e6, 0), "axis-text", "middle");
+      txt(svg, x + w / 2, Y(r.v) + 16, fmt(r.v / 1e6, 0), "lbl-b", "middle", { fill: "#ffffff" });
+    } else if (i === rows.length - 3 || r.v === Math.max(...L.year_sales.slice(0, ys.length)))
+      txt(svg, x + w / 2, Y(r.v) - 6, fmt(r.v / 1e6, 0), "lbl-b", "middle");
+    const hit = el("rect", { x: m.l + i * bw, y: m.t, width: bw, height: ih, fill: "transparent" }, svg);
+    hover(hit, `<div class="t">${r.y}${r.kind === "expected" ? " (expected)" : r.kind === "budget" ? " (budget range)" : ""}</div>` +
+      (r.hi ? `<div class="r"><span>If the current trend continues</span><b>${M(r.v)}</b></div><div class="r"><span>Forecast model</span><b>${M(r.hi)}</b></div>` :
+      `<div class="r"><span>Sales</span><b>${M(r.v)}</b></div>`));
+  });
+  $("#yr-legend").innerHTML = `<span><i class="key-rect" style="background:var(--blue)"></i>Actual</span><span><i class="key-rect" style="background:var(--orange)"></i>If the current trend continues</span><span><i class="key-rect" style="border:1.5px dashed var(--orange)"></i>Up to the forecast model</span>`;
+  $("#yr-sub").textContent = `${yFy - (ys.length - 1)} to ${yFy} actual; ${yCur} expected and ${yNext} budget as a range ($ million)`;
+  $("#yr-table").innerHTML = table([{ h: "Year" }, { h: "Sales", num: true }, { h: "Litres", num: true }, { h: "Price per litre", num: true }],
+    L.years.map((y, i) => [y + (y === yCur ? ` (${Mt.ytd_label.split(" ")[0]})` : ""), M(L.year_sales[i]), fmt(L.year_liters[i] / 1e6, 2) + "m", "$" + fmt(L.year_price[i], 2)]));
+}
+
+// ---------- price or volume ----------
+let br = "fy";
+$("[data-br=fy]").textContent = `${yFy} vs ${yFy - 1}`; $("[data-br=ytd]").textContent = `${Mt.ytd_label} vs ${yFy}`;
+$$("[data-br]").forEach(b => b.addEventListener("click", () => { br = b.dataset.br; $$("[data-br]").forEach(x => x.setAttribute("aria-pressed", x === b)); drawPV(); }));
+function waterfall(host, steps, h = 300) {
+  host.innerHTML = "";
+  const W = Math.max(320, host.clientWidth), H = h, m = { l: 56, r: 10, t: 26, b: 34 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = el("svg", { width: W, height: H, role: "img" }, host);
+  let run = 0; const bars = steps.map(s => { if (s.total) { run = s.v; return { ...s, a: 0, b: s.v }; } const a = run; run += s.v; return { ...s, a, b: run }; });
+  const vals = bars.flatMap(b => [b.a, b.b]), lo0 = Math.min(...bars.filter(b => b.total).map(b => b.b));
+  const hiV = Math.max(...vals), loV = Math.min(...vals.filter(v => v > 0));
+  const span = hiV - Math.min(loV, lo0), base = Math.max(0, Math.min(loV, lo0) - span * 0.6), top = hiV + span * 0.15;
+  const Y = v => m.t + ih - (Math.max(v, base) - base) / (top - base) * ih, bw = iw / bars.length;
+  const st = niceStep((top - base) / 4);
+  for (let v = Math.ceil(base / st) * st; v <= top; v += st) { el("line", { x1: m.l, x2: m.l + iw, y1: Y(v), y2: Y(v), stroke: css("--grid") }, svg); txt(svg, m.l - 6, Y(v) + 4, "$" + fmt(v / 1e6) + "m", "axis-text", "end"); }
+  bars.forEach((b, i) => {
+    const x = m.l + i * bw + bw * 0.2, w = bw * 0.6, y1 = Y(Math.max(b.a, b.b)), y2 = Y(Math.min(b.a, b.b));
+    const col = b.total ? css("--blue") : (b.v >= 0 ? css("--up") : css("--down"));
+    el("rect", { x, y: y1, width: w, height: Math.max(2, y2 - y1), rx: 4, fill: col }, svg);
+    if (i < bars.length - 1) el("line", { x1: x + w, x2: x + bw, y1: Y(b.b), y2: Y(b.b), stroke: css("--axis"), "stroke-dasharray": "3 3" }, svg);
+    const narrow = bw < 90;
+    txt(svg, x + w / 2, y1 - 7, b.total ? M(b.v, narrow ? 0 : 1) : Ms(b.v, narrow ? 0 : 1), "lbl-b", "middle", narrow ? { style: "font-size:10.5px" } : {});
+    txt(svg, x + w / 2, H - 16, b.label, "lbl-2", "middle");
+    if (b.sub && !narrow) txt(svg, x + w / 2, H - 3, b.sub, "axis-text", "middle");
+    const hit = el("rect", { x: m.l + i * bw, y: m.t, width: bw, height: ih, fill: "transparent" }, svg);
+    hover(hit, `<div class="t">${b.label}</div><div class="r"><span>${b.total ? "Sales" : "Effect on sales"}</span><b>${b.total ? M(b.v) : Ms(b.v)}</b></div>${b.tip ? `<div style="margin-top:4px;color:var(--text-secondary)">${b.tip}</div>` : ""}`);
+  });
+}
+function drawPV() {
+  const B = br === "fy" ? L.bridge_fy : L.bridge_ytd, lab0 = br === "fy" ? String(yFy - 1) : `${Mt.ytd_label.replace(String(yCur), String(yFy))}`, lab1 = br === "fy" ? String(yFy) : Mt.ytd_label;
+  waterfall($("#wf-chart"), [
+    { label: lab0, v: B.before, total: true },
+    { label: "Volume", sub: `litres ${P(B.vol_pct)}`, v: B.volume, tip: "More or fewer litres sold, at last period's average price." },
+    { label: "Mix", v: B.mix, tip: "Selling more of the dearer or cheaper product families." },
+    { label: "Price", sub: `like for like ${P(B.like_price_pct)}`, v: B.price, tip: "Higher or lower price per litre within each family (like for like, without the mix effect)." },
+    { label: lab1, sub: `sales ${P(B.sales_pct)}`, v: B.after, total: true }]);
+  $("#wf-note").textContent = `Sales went from ${M(B.before)} to ${M(B.after)} (${P(B.sales_pct)}). Volume: ${Ms(B.volume)}. Mix: ${Ms(B.mix)}. Price: ${Ms(B.price)}.`;
+  drawQuad(); drawFamBars();
+}
+function drawQuad() {
+  const host = $("#q-chart"); host.innerHTML = "";
+  const F = L.families, W = Math.max(300, host.clientWidth), H = 330, m = { l: 44, r: 16, t: 14, b: 38 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const xs = F.map(f => f.ytd_vol_pct), ys = F.map(f => f.ytd_price_pct);
+  const xMin = Math.min(-20, Math.floor(Math.min(...xs) / 5) * 5), xMax = Math.max(5, Math.ceil(Math.max(...xs) / 5) * 5);
+  const yMin = Math.min(-5, Math.floor(Math.min(...ys) / 2) * 2), yMax = Math.max(8, Math.ceil(Math.max(...ys) / 2) * 2);
+  const X = v => m.l + (v - xMin) / (xMax - xMin) * iw, Y = v => m.t + ih - (v - yMin) / (yMax - yMin) * ih;
+  const svg = el("svg", { width: W, height: H, role: "img", "aria-label": "Volume change vs price change by family" }, host);
+  el("rect", { x: X(xMin), y: Y(yMax), width: X(0) - X(xMin), height: Y(0) - Y(yMax), fill: css("--wash-yellow") }, svg);
+  el("rect", { x: X(xMin), y: Y(0), width: X(0) - X(xMin), height: Y(yMin) - Y(0), fill: css("--wash-red") }, svg);
+  el("rect", { x: X(0), y: Y(yMax), width: X(xMax) - X(0), height: Y(yMin) - Y(yMax), fill: css("--wash-aqua") }, svg);
+  for (let v = xMin; v <= xMax; v += 5) { el("line", { x1: X(v), x2: X(v), y1: m.t, y2: m.t + ih, stroke: css("--grid") }, svg); txt(svg, X(v), H - 20, P(v, 0), "axis-text", "middle"); }
+  for (let v = yMin; v <= yMax; v += 2) { el("line", { x1: m.l, x2: m.l + iw, y1: Y(v), y2: Y(v), stroke: css("--grid") }, svg); txt(svg, m.l - 6, Y(v) + 4, P(v, 0), "axis-text", "end"); }
+  el("line", { x1: X(0), x2: X(0), y1: m.t, y2: m.t + ih, stroke: css("--axis"), "stroke-width": 1.5 }, svg);
+  el("line", { x1: m.l, x2: m.l + iw, y1: Y(0), y2: Y(0), stroke: css("--axis"), "stroke-width": 1.5 }, svg);
+  txt(svg, m.l + iw / 2, H - 4, "Change in litres sold →", "axis-text", "middle");
+  if (W >= 520) { txt(svg, X(xMin) + 6, Y(yMax) + 14, "Fewer litres, higher price", "lbl-2"); txt(svg, X(xMin) + 6, Y(yMin) - 6, "Fewer litres, lower price", "lbl-2");
+  txt(svg, X(xMax) - 6, Y(yMax) + 14, "More litres", "lbl-2", "end"); }
+  const maxS = Math.max(...F.map(f => f.ytd_sales));
+  const pts = F.map(f => ({ f, x: X(f.ytd_vol_pct), y: Y(f.ytd_price_pct), r: 5 + 13 * Math.sqrt(f.ytd_sales / maxS) })).sort((a, b) => b.r - a.r);
+  pts.forEach(p => { const c = el("circle", { cx: p.x, cy: p.y, r: p.r, fill: css(STC[p.f.status]), "fill-opacity": 0.85, stroke: css("--surface-1"), "stroke-width": 2 }, svg);
+    hover(c, `<div class="t">${p.f.family}</div><div class="r"><span>Litres</span><b>${P(p.f.ytd_vol_pct)}</b></div><div class="r"><span>Price per litre</span><b>${P(p.f.ytd_price_pct)}</b></div><div class="r"><span>Sales</span><b>${P(p.f.ytd_sales_pct)}</b></div><div class="r"><span>Sales ${Mt.ytd_label}</span><b>${M(p.f.ytd_sales)}</b></div>`); });
+  const boxes = pts.map(p => ({ x1: p.x - p.r, x2: p.x + p.r, y1: p.y - p.r, y2: p.y + p.r }));
+  const hitAny = (b) => boxes.some(q => b.x1 < q.x2 && b.x2 > q.x1 && b.y1 < q.y2 && b.y2 > q.y1);
+  pts.slice().sort((a, b) => b.r - a.r).forEach(p => {
+    const w = p.f.family.length * 6.4, h = 13, cands = [
+      [p.x + p.r + 4, p.y + 4, "start"], [p.x - p.r - 4, p.y + 4, "end"], [p.x, p.y - p.r - 5, "middle"], [p.x, p.y + p.r + 13, "middle"],
+      [p.x + p.r + 4, p.y - p.r, "start"], [p.x + p.r + 4, p.y + p.r + 8, "start"], [p.x - p.r - 4, p.y - p.r, "end"], [p.x - p.r - 4, p.y + p.r + 8, "end"]];
+    let pick = cands[0];
+    for (const c of cands) { const x1 = c[2] === "start" ? c[0] : c[2] === "end" ? c[0] - w : c[0] - w / 2;
+      const bx = { x1, x2: x1 + w, y1: c[1] - 10, y2: c[1] + 3 };
+      if (bx.x1 >= m.l && bx.x2 <= W - 2 && bx.y1 >= m.t && bx.y2 <= m.t + ih && !hitAny(bx)) { pick = c; boxes.push(bx); break; } }
+    txt(svg, pick[0], pick[1], p.f.family, "lbl", pick[2]);
+  });
+  $("#q-legend").innerHTML = Object.keys(STC).map(s => `<span><i class="key-rect" style="background:var(${STC[s]});border-radius:50%"></i>${L.status[s].label}</span>`).join("") + `<span style="color:var(--text-muted)">bubble size = sales</span>`;
+  $("#q-sub").textContent = `${Mt.ytd_label} vs the same months of ${yFy}. Up = higher price per litre, right = more litres.`;
+}
+function drawFamBars() {
+  const host = $("#fb-chart"); host.innerHTML = "";
+  const F = [...L.families].map(f => ({ f, v: br === "fy" ? f.fy_sales_pct : f.ytd_sales_pct })).sort((a, b) => b.v - a.v);
+  const W = Math.max(300, host.clientWidth), rowH = 27, m = { l: 168, r: 56, t: 6, b: 6 }, H = m.t + rowH * F.length + m.b, iw = W - m.l - m.r;
+  const svg = el("svg", { width: W, height: H, role: "img" }, host);
+  const lo = Math.min(0, ...F.map(d => d.v)) * 1.6, hi = Math.max(2, ...F.map(d => d.v)) * 1.3, X = v => m.l + (v - lo) / (hi - lo) * iw;
+  el("line", { x1: X(0), x2: X(0), y1: m.t, y2: H - m.b, stroke: css("--axis") }, svg);
+  F.forEach((d, i) => { const y = m.t + i * rowH;
+    txt(svg, m.l - 8, y + rowH / 2 + 4, d.f.family, "lbl", "end");
+    el("rect", { x: Math.min(X(0), X(d.v)), y: y + 5, width: Math.max(2, Math.abs(X(d.v) - X(0))), height: rowH - 10, rx: 4, fill: css(d.v >= 0 ? "--up" : "--down") }, svg);
+    txt(svg, d.v >= 0 ? X(d.v) + 5 : X(d.v) - 5, y + rowH / 2 + 4, P(d.v), "lbl-b", d.v >= 0 ? "start" : "end");
+    const hit = el("rect", { x: 0, y, width: W, height: rowH, fill: "transparent" }, svg);
+    const vol = br === "fy" ? d.f.fy_vol_pct : d.f.ytd_vol_pct, pr = br === "fy" ? d.f.fy_price_pct : d.f.ytd_price_pct;
+    hover(hit, `<div class="t">${d.f.family}</div><div class="r"><span>Sales</span><b>${P(d.v)}</b></div><div class="r"><span>Litres</span><b>${P(vol)}</b></div><div class="r"><span>Price per litre</span><b>${P(pr)}</b></div>`); });
+  $("#fb-sub").textContent = br === "fy" ? `${yFy} vs ${yFy - 1}` : `${Mt.ytd_label} vs the same months of ${yFy}`;
+  $("#fam-table").innerHTML = table([{ h: "Family" }, { h: `Sales ${yFy}`, num: true }, { h: "Sales", num: true }, { h: "Litres", num: true }, { h: "Price", num: true }, { h: `Sales ${Mt.ytd_label}`, num: true }, { h: "Litres", num: true }, { h: "Price", num: true }],
+    L.families.map(f => [f.family, M(f.fy_sales), P(f.fy_sales_pct), P(f.fy_vol_pct), P(f.fy_price_pct), P(f.ytd_sales_pct), P(f.ytd_vol_pct), P(f.ytd_price_pct)]));
+}
+$("#act-table").innerHTML = table([{ h: "Family" }, { h: `Share of ${yFy} sales`, num: true }, { h: `Sales ${Mt.ytd_label}`, num: true }, { h: "Status" }, { h: "What to do" }],
+  [...L.families].sort((a, b) => ({ steady: 0, price: 1, losing: 2 }[a.status] - { steady: 0, price: 1, losing: 2 }[b.status]) || b.fy_sales - a.fy_sales)
+    .map(f => [`<b>${f.family}</b>`, fmt(f.share_fy * 100, 0) + "%", pill(f.ytd_sales_pct), chip(f.status), L.status[f.status].action]));
+
+// ---------- budget vs actual ----------
+const BT = L.bva_total;
+$("#bva-intro").textContent = `In December ${yFy} the forecast model predicted ${yCur} using only the data known then. We use that as the "budget" and compare it with what really happened in ${Mt.ytd_label}. For the full year ${yCur} the budget was ${M(K.budget_fy_total)} (${P((K.budget_fy_total / K.sales_fy - 1) * 100)} vs ${yFy}).`;
+$("#b1").textContent = M(BT.budget_sales); $("#b1d").textContent = `${Mt.ytd_label}, ${fmt(BT.budget_liters / 1e6, 2)}m litres`;
+$("#b2").textContent = M(BT.actual_sales); $("#b2d").textContent = `${Mt.ytd_label}, ${fmt(BT.actual_liters / 1e6, 2)}m litres`;
+$("#b3").textContent = Ms(BT.var_total); $("#b3d").innerHTML = `${pill((BT.actual_sales / BT.budget_sales - 1) * 100)} · volume ${Ms(BT.var_volume)}, price ${Ms(BT.var_price)}`;
+function drawBva() {
+  const host = $("#bm-chart"); host.innerHTML = "";
+  const D = L.bva_month, W = Math.max(300, host.clientWidth), H = 260, m = { l: 44, r: 10, t: 22, b: 26 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = el("svg", { width: W, height: H, role: "img" }, host);
+  const maxV = Math.max(...D.flatMap(d => [d.budget_sales, d.actual_sales])), st = niceStep(maxV / 4), yMax = Math.ceil(maxV / st) * st;
+  const Y = v => m.t + ih - v / yMax * ih, gw = iw / D.length;
+  for (let v = 0; v <= yMax; v += st) { el("line", { x1: m.l, x2: m.l + iw, y1: Y(v), y2: Y(v), stroke: css("--grid") }, svg); txt(svg, m.l - 6, Y(v) + 4, fmt(v / 1e6), "axis-text", "end"); }
+  D.forEach((d, i) => { const x0 = m.l + i * gw + gw * 0.14, w = gw * 0.34;
+    el("rect", { x: x0, y: Y(d.budget_sales), width: w, height: Y(0) - Y(d.budget_sales), rx: 4, fill: css("--blue") }, svg);
+    el("rect", { x: x0 + w + 3, y: Y(d.actual_sales), width: w, height: Y(0) - Y(d.actual_sales), rx: 4, fill: css("--orange") }, svg);
+    const g = (d.actual_sales / d.budget_sales - 1) * 100;
+    txt(svg, x0 + w + 1.5, Y(Math.max(d.budget_sales, d.actual_sales)) - 7, P(g), "lbl-b", "middle", { fill: css(g >= 0 ? "--up" : "--down") });
+    txt(svg, x0 + w + 1.5, H - 8, monS(d.month), "axis-text", "middle");
+    const hit = el("rect", { x: m.l + i * gw, y: m.t, width: gw, height: ih, fill: "transparent" }, svg);
+    hover(hit, `<div class="t">${mon(d.month)}</div><div class="r"><span>Budget</span><b>${M(d.budget_sales, 2)}</b></div><div class="r"><span>Actual</span><b>${M(d.actual_sales, 2)}</b></div><div class="r"><span>Gap</span><b>${P(g)}</b></div>`); });
+  $("#bm-legend").innerHTML = `<span><i class="key-rect" style="background:var(--blue)"></i>Budget</span><span><i class="key-rect" style="background:var(--orange)"></i>Actual</span>`;
+  $("#bm-table").innerHTML = table([{ h: "Month" }, { h: "Budget", num: true }, { h: "Actual", num: true }, { h: "Gap", num: true }],
+    D.map(d => [mon(d.month), M(d.budget_sales, 2), M(d.actual_sales, 2), P((d.actual_sales / d.budget_sales - 1) * 100)]));
+  waterfall($("#bw-chart"), [{ label: "Budget", v: BT.budget_sales, total: true },
+    { label: "Volume", sub: `litres ${P((BT.actual_liters / BT.budget_liters - 1) * 100)}`, v: BT.var_volume, tip: "Fewer or more litres than budgeted, at the budget price." },
+    { label: "Price", v: BT.var_price, tip: "Higher or lower price per litre than budgeted." },
+    { label: "Actual", v: BT.actual_sales, total: true }], 260);
+  const hb = $("#bf-chart"); hb.innerHTML = "";
+  const F = [...L.bva_family].sort((a, b) => b.var_total - a.var_total);
+  const W2 = Math.max(300, hb.clientWidth), rowH = 27, mm = { l: 178, r: 70, t: 6, b: 6 }, H2 = mm.t + rowH * F.length + mm.b, iw2 = W2 - mm.l - mm.r;
+  const s2 = el("svg", { width: W2, height: H2, role: "img" }, hb);
+  const lo2 = Math.min(0, ...F.map(d => d.var_total)) * 1.6, hi2 = Math.max(0, ...F.map(d => d.var_total)) * 1.3 || 1, X = v => mm.l + (v - lo2) / (hi2 - lo2) * iw2;
+  el("line", { x1: X(0), x2: X(0), y1: mm.t, y2: H2 - mm.b, stroke: css("--axis") }, s2);
+  F.forEach((d, i) => { const y = mm.t + i * rowH;
+    txt(s2, mm.l - 8, y + rowH / 2 + 4, d.family, "lbl", "end");
+    el("rect", { x: Math.min(X(0), X(d.var_total)), y: y + 5, width: Math.max(2, Math.abs(X(d.var_total) - X(0))), height: rowH - 10, rx: 4, fill: css(d.var_total >= 0 ? "--up" : "--down") }, s2);
+    txt(s2, d.var_total >= 0 ? X(d.var_total) + 5 : X(d.var_total) - 5, y + rowH / 2 + 4, Ms(d.var_total, 2), "lbl-b", d.var_total >= 0 ? "start" : "end");
+    const hit = el("rect", { x: 0, y, width: W2, height: rowH, fill: "transparent" }, s2);
+    hover(hit, `<div class="t">${d.family}</div><div class="r"><span>Budget</span><b>${M(d.budget_sales, 2)}</b></div><div class="r"><span>Actual</span><b>${M(d.actual_sales, 2)}</b></div><div class="r"><span>From volume</span><b>${Ms(d.var_volume, 2)}</b></div><div class="r"><span>From price</span><b>${Ms(d.var_price, 2)}</b></div>`); });
+  $("#bf-table").innerHTML = table([{ h: "Family" }, { h: "Budget", num: true }, { h: "Actual", num: true }, { h: "Gap", num: true }, { h: "From volume", num: true }, { h: "From price", num: true }],
+    F.map(d => [d.family, M(d.budget_sales, 2), M(d.actual_sales, 2), Ms(d.var_total, 2), Ms(d.var_volume, 2), Ms(d.var_price, 2)]));
+}
+
+// ---------- forecast & budget ----------
+const S = L.scenarios, O = L.outlook;
+let v = +(S.trend_v * 100).toFixed(1), p = +(S.trend_p * 100).toFixed(1), preset = "trend";
+const r1 = x => Math.round(x * 1000) / 10;
+const PRESETS = { trend: { label: "Current trend", v: S.trend_v * 100, p: S.trend_p * 100 },
+  flat: { label: "Hold volume", v: 0, p: S.trend_p * 100 }, model: { label: "Forecast model", v: null, p: null } };
+$("#presets").innerHTML = Object.entries(PRESETS).map(([k, q]) => `<button data-p="${k}">${q.label}</button>`).join("");
+$$("#presets button").forEach(b => b.addEventListener("click", () => { preset = b.dataset.p; const q = PRESETS[preset];
+  if (q.v != null) { v = q.v; p = q.p; $("#sv").value = v; $("#sp").value = p; } updScenario(); }));
+$("#sv").value = PRESETS.trend.v; $("#sp").value = PRESETS.trend.p; v = PRESETS.trend.v; p = PRESETS.trend.p;
+$("#sv").addEventListener("input", e => { v = +e.target.value; preset = "custom"; updScenario(); });
+$("#sp").addEventListener("input", e => { p = +e.target.value; preset = "custom"; updScenario(); });
+function scen() {
+  if (preset === "model") return { cur: S.model_cur, next: S.model_next };
+  const g = (1 + v / 100) * (1 + p / 100), cur = S.ytd_actual + S.rest_fy_prev * g;
+  return { cur, next: cur * g };
+}
+function updScenario() {
+  $$("#presets button").forEach(b => b.classList.toggle("on", b.dataset.p === preset));
+  const s = scen(), modelOn = preset === "model";
+  $("#sv-v").textContent = modelOn ? "set by model" : P(v); $("#sp-v").textContent = modelOn ? "set by model" : P(p);
+  $("#sv").disabled = $("#sp").disabled = false;
+  $("#o1").textContent = M(s.cur); $("#o1d").innerHTML = `${pill((s.cur / K.sales_fy - 1) * 100)} vs ${yFy} · gross margin ${M(s.cur * K.margin_fy)}`;
+  $("#o2").textContent = M(s.next); $("#o2d").innerHTML = `${pill((s.next / s.cur - 1) * 100)} vs ${yCur} · gross margin ${M(s.next * K.margin_fy)}`;
+  $("#sc-note").textContent = modelOn ? `The forecast model expects about flat sales. It was ${fmt(Math.abs(K.bva_pct), 1)}% too high in ${Mt.ytd_label}, so treat this as the top of the range.`
+    : `${yCur} = actual ${Mt.ytd_label} (${M(S.ytd_actual)}) + the rest of ${yFy} adjusted by these changes. ${yNext} = ${yCur} adjusted again. Gross margin uses this year's ${fmt(K.margin_fy * 100, 1)}%.`;
+  drawScenarioBars(s); drawPhasing(s.next); drawFamBudget();
+}
+function drawScenarioBars(s) {
+  const host = $("#sc-chart"); host.innerHTML = "";
+  const rows = [{ k: `${yFy} actual`, v: K.sales_fy, c: "--blue" }, { k: `${yCur} expected`, v: s.cur, c: "--violet" }, { k: `${yNext} budget`, v: s.next, c: "--orange" },
+    { k: "Range: current trend", v: S.trend_next, c: "--axis" }, { k: "Range: forecast model", v: S.model_next, c: "--axis" }];
+  const W = Math.max(300, host.clientWidth), rowH = 30, m = { l: 150, r: 70, t: 4, b: 4 }, H = m.t + rowH * rows.length + m.b, iw = W - m.l - m.r;
+  const svg = el("svg", { width: W, height: H, role: "img" }, host);
+  const maxV = Math.max(...rows.map(r => r.v)), X = val => m.l + val / maxV * iw;
+  rows.forEach((r, i) => { const y = m.t + i * rowH;
+    txt(svg, m.l - 8, y + rowH / 2 + 4, r.k, i < 3 ? "lbl" : "lbl-2", "end");
+    el("rect", { x: m.l, y: y + 6, width: X(r.v) - m.l, height: rowH - 12, rx: 4, fill: css(r.c), opacity: i < 3 ? 1 : 0.7 }, svg);
+    txt(svg, X(r.v) + 6, y + rowH / 2 + 4, M(r.v), "lbl-b"); });
+  $("#sc-legend").innerHTML = `<span style="color:var(--text-muted)">${yNext} budget compared with this year and with the two ends of the planning range</span>`;
+}
+function drawPhasing(total) {
+  const host = $("#ph-chart"); host.innerHTML = "";
+  const SE = L.seasonality, W = Math.max(300, host.clientWidth), H = 230, m = { l: 40, r: 10, t: 24, b: 26 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = el("svg", { width: W, height: H, role: "img" }, host);
+  const vals = SE.map(s => s.avg_share * total), maxV = Math.max(...vals) * 1.12, Y = val => m.t + ih - val / maxV * ih, bw = iw / 12;
+  const order = [...vals].sort((a, b) => b - a);
+  vals.forEach((val, i) => { const x = m.l + i * bw + bw * 0.15, w = bw * 0.7, hot = val >= order[1], cold = val === order[11];
+    el("rect", { x, y: Y(val), width: w, height: Y(0) - Y(val), rx: 4, fill: css(hot ? "--orange" : cold ? "--blue" : "--aqua") }, svg);
+    txt(svg, x + w / 2, Y(val) - 6, fmt(val / 1e6, 1), "lbl-b", "middle");
+    txt(svg, x + w / 2, H - 8, new Date(2000, i, 1).toLocaleDateString("en-US", { month: "short" }), "axis-text", "middle");
+    const hit = el("rect", { x: m.l + i * bw, y: m.t, width: bw, height: ih, fill: "transparent" }, svg);
+    hover(hit, `<div class="t">${new Date(2000, i, 1).toLocaleDateString("en-US", { month: "long" })} ${yNext}</div><div class="r"><span>Budget</span><b>${M(val, 2)}</b></div><div class="r"><span>Usual share of the year</span><b>${fmt(SE[i].avg_share * 100, 1)}%</b></div><div class="r"><span>Range in past years</span><b>${fmt(SE[i].min_share * 100, 1)}–${fmt(SE[i].max_share * 100, 1)}%</b></div>`); });
+  $("#ph-table").innerHTML = table([{ h: "Month" }, { h: "Usual share", num: true }, { h: `Budget ${yNext}`, num: true }],
+    SE.map((s, i) => [new Date(2000, i, 1).toLocaleDateString("en-US", { month: "long" }), fmt(s.avg_share * 100, 1) + "%", M(s.avg_share * total, 2)]));
+}
+function drawFamBudget() {
+  const F = [...L.families];
+  $("#fb-table2").innerHTML = table([{ h: "Family" }, { h: "Status" }, { h: `${yFy} actual`, num: true }, { h: `${yNext}: current trend`, num: true }, { h: "vs " + yFy, num: true }, { h: `${yNext}: forecast model`, num: true }, { h: "vs " + yFy, num: true }],
+    F.map(f => [`<b>${f.family}</b>`, chip(f.status), M(f.fy_sales), M(f.trend_next), pill((f.trend_next / f.fy_sales - 1) * 100), M(f.model_next), pill((f.model_next / f.fy_sales - 1) * 100)])
+    .concat([[`<b>Total</b>`, "", `<b>${M(K.sales_fy)}</b>`, `<b>${M(F.reduce((a, f) => a + f.trend_next, 0))}</b>`, "", `<b>${M(F.reduce((a, f) => a + f.model_next, 0))}</b>`, ""]]));
+}
+function drawForecast() {
+  const host = $("#fc-chart"); host.innerHTML = "";
+  const startI = L.months.indexOf(`${yFy - 2}-01`), act = L.months.slice(startI).map((mm, i) => ({ m: mm, v: L.month_sales[startI + i] }));
+  const all = act.map(a => a.m).concat(O.months), n = all.length, idx = Object.fromEntries(all.map((mm, i) => [mm, i]));
+  const W = Math.max(320, host.clientWidth), H = 320, m = { l: 48, r: 12, t: 14, b: 28 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const svg = el("svg", { width: W, height: H, role: "img", "aria-label": "Monthly sales, forecast and budget" }, host);
+  const maxV = Math.max(...O.hi, ...act.map(a => a.v)), minV = Math.min(...O.lo, ...act.map(a => a.v)), st = niceStep((maxV - minV) / 4),
+        yMax = Math.ceil(maxV / st) * st, yMin = Math.floor(minV / st) * st;
+  const X = i => m.l + i * iw / (n - 1), Y = val => m.t + ih - (val - yMin) / (yMax - yMin) * ih;
+  for (let val = yMin; val <= yMax; val += st) { el("line", { x1: m.l, x2: m.l + iw, y1: Y(val), y2: Y(val), stroke: css("--grid") }, svg); txt(svg, m.l - 6, Y(val) + 4, "$" + fmt(val / 1e6) + "m", "axis-text", "end"); }
+  all.forEach((mm, i) => { if (mm.endsWith("-01")) { txt(svg, X(i), H - 8, mm.slice(0, 4), "axis-text", "start"); el("line", { x1: X(i), x2: X(i), y1: m.t + ih, y2: m.t + ih + 5, stroke: css("--axis") }, svg); } });
+  const fi = O.months.map(mm => idx[mm]);
+  let band = fi.map((i, k) => `${k ? "L" : "M"}${X(i)},${Y(O.hi[k])}`).join("") + fi.slice().reverse().map((i, k) => `L${X(i)},${Y(O.lo[O.lo.length - 1 - k])}`).join("") + "Z";
+  el("path", { d: band, fill: css("--wash-orange") }, svg);
+  const lastA = act[act.length - 1];
+  el("path", { d: `M${X(idx[lastA.m])},${Y(lastA.v)}` + fi.map((i, k) => `L${X(i)},${Y(O.f[k])}`).join(""), fill: "none", stroke: css("--orange"), "stroke-width": 2.5, "stroke-dasharray": "6 4" }, svg);
+  const BM = L.budget_months;
+  el("path", { d: BM.months.map((mm, k) => `${k ? "L" : "M"}${X(idx[mm])},${Y(BM.f[k])}`).join(""), fill: "none", stroke: css("--violet"), "stroke-width": 2 , "stroke-dasharray": "2 3"}, svg);
+  el("path", { d: act.map((a, i) => `${i ? "L" : "M"}${X(i)},${Y(a.v)}`).join(""), fill: "none", stroke: css("--blue"), "stroke-width": 2.5, "stroke-linejoin": "round" }, svg);
+  const cross = el("line", { y1: m.t, y2: m.t + ih, stroke: css("--axis"), visibility: "hidden" }, svg);
+  const hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" }, svg);
+  hit.addEventListener("mousemove", ev => { const bx = svg.getBoundingClientRect(), i = Math.max(0, Math.min(n - 1, Math.round((ev.clientX - bx.left - m.l) / (iw / (n - 1)))));
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("visibility", "visible");
+    const mm = all[i], a = act.find(q => q.m === mm), k = O.months.indexOf(mm), b = BM.months.indexOf(mm);
+    showTip(ev, `<div class="t">${mon(mm)}</div>` + (a ? `<div class="r"><span>Actual</span><b>${M(a.v, 2)}</b></div>` : "") +
+      (k >= 0 ? `<div class="r"><span>Forecast</span><b>${M(O.f[k], 2)}</b></div><div class="r"><span>Likely range (80%)</span><b>${fmt(O.lo[k] / 1e6, 1)}–${fmt(O.hi[k] / 1e6, 1)}</b></div>` : "") +
+      (b >= 0 ? `<div class="r"><span>Old budget</span><b>${M(BM.f[b], 2)}</b></div>` : "")); });
+  hit.addEventListener("mouseleave", () => { hideTip(); cross.setAttribute("visibility", "hidden"); });
+  $("#fc-legend").innerHTML = `<span><i class="key-line" style="background:var(--blue)"></i>Actual</span><span><i class="key-dash" style="border-color:var(--orange)"></i>Forecast</span><span><i class="key-rect" style="background:var(--wash-orange)"></i>Likely range (80%)</span><span><i class="key-dash" style="border-color:var(--violet);border-top-style:dotted"></i>Old budget ${yCur}</span>`;
+  $("#fc-sub").textContent = `Actual sales to ${mon(Mt.last_month)}, the forecast to December ${yNext}, and the budget made in December ${yFy}. Sales always peak in the autumn and before Christmas, and dip in January.`;
+  $("#fcm-table").innerHTML = table([{ h: "Month" }, { h: "Actual", num: true }, { h: "Forecast", num: true }, { h: "Low (80%)", num: true }, { h: "High (80%)", num: true }],
+    all.map(mm => { const a = act.find(q => q.m === mm), k = O.months.indexOf(mm);
+      return [mon(mm), a ? M(a.v, 2) : "", k >= 0 ? M(O.f[k], 2) : "", k >= 0 ? M(O.lo[k], 2) : "", k >= 0 ? M(O.hi[k], 2) : ""]; }));
+}
+
+// ---------- tabs ----------
+const draw = { sum: drawYears, pv: drawPV, bva: drawBva, fc: () => { drawForecast(); updScenario(); }, about: () => {} };
+function show(tab) { $$("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab)); $$("section[data-page]").forEach(s => s.hidden = s.dataset.page !== tab); draw[tab](); }
+$$("nav button").forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => show($("nav button[aria-selected=true]").dataset.tab), 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => show($("nav button[aria-selected=true]").dataset.tab));
+show("sum");
+})();
+</script>
+</body>
+</html>

@@ -41,3 +41,21 @@ jobs:
       - name: Publish report to the run summary
         if: always()
         run: cat ../data_quality/dq_report.md >> "$GITHUB_STEP_SUMMARY"
+
+  liquor-market:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: liquor-market/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r ../requirements.txt
+      - name: Run data quality checks
+        run: python 02_data_quality.py
+      - name: Publish report to the run summary
+        if: always()
+        run: cat ../data_quality/dq_report.md >> "$GITHUB_STEP_SUMMARY"
+
