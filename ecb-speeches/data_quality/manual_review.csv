@@ -1,0 +1,41 @@
+speech_id,year,playbook_version,sample_seed,playbook_primary,verdict,reviewer_note
+44,1999,v2,11,T14,correct,
+84,1999,v2,11,T01,correct,
+165,2001,v2,11,T01,correct,
+250,2002,v2,11,T04,correct,
+262,2002,v2,11,T07,correct,
+395,2004,v2,11,T05,defensible,Short dinner speech with no clear subject.
+396,2004,v2,11,T01,correct,
+485,2005,v2,11,T12,correct,
+654,2007,v2,11,T08,wrong,About financial integration in Europe. No subject for this yet.
+665,2007,v2,11,T05,defensible,"Very short remarks, few matching words."
+755,2008,v2,11,T03,wrong,"About research on capital markets, but labelled as bond buying."
+783,2008,v2,11,T09,wrong,"About financial integration in Europe, but labelled as payments."
+976,2009,v2,11,T05,correct,
+1108,2011,v2,11,T01,defensible,"About lessons from the crisis. ""Crises"" would also fit."
+1118,2011,v2,11,T06,correct,
+1161,2011,v2,11,T09,correct,
+1176,2011,v2,11,T06,correct,
+1260,2012,v2,11,T06,correct,
+1331,2013,v2,11,T09,correct,
+1486,2014,v2,11,T02,correct,
+1495,2014,v2,11,T05,wrong,"About long-term interest rates, but not labelled as interest rates."
+1531,2014,v2,11,T06,defensible,Academic conference speech.
+1564,2015,v2,11,T01,correct,
+1594,2015,v2,11,T14,defensible,"Cultural event, no economic subject."
+1693,2016,v2,11,T12,correct,
+1758,2017,v2,11,T04,correct,
+1809,2017,v2,11,T01,correct,
+1814,2017,v2,11,T02,defensible,"About unusual policy tools. ""Bond buying"" would also fit."
+2005,2019,v2,11,T12,correct,
+2182,2021,v2,11,T10,correct,
+2187,2021,v2,11,T01,defensible,About borrowing costs in the pandemic. Several subjects fit.
+2189,2021,v2,11,T13,correct,
+2199,2021,v2,11,T09,correct,
+2322,2022,v2,11,T10,correct,
+2363,2023,v2,11,T10,correct,
+2478,2024,v2,11,T11,wrong,About competition rules. No subject for this yet.
+2492,2024,v2,11,T10,wrong,"Anniversary speech about Europe, but labelled as climate."
+2521,2025,v2,11,T10,correct,
+2571,2025,v2,11,T05,correct,
+2591,2026,v2,11,T01,correct,

@@ -1,0 +1,22 @@
+{
+  "source": "European Central Bank, Speeches dataset, https://www.ecb.europa.eu/press/key/html/downloads.en.html",
+  "retrieved": "2026-11-08",
+  "raw_file_sha256": "143aaebdd2e65d32ced8f6a556a830271ed14a51e893da984edfacb17c37a64c",
+  "raw_rows": 3086,
+  "raw_last_speech_date": "2026-10-30",
+  "excluded": {
+    "before_1999": 65,
+    "too_short_or_slides": 221,
+    "not_english": 143
+  },
+  "analysed_speeches": 2657,
+  "analysed_words": 8266665,
+  "rules": {
+    "first_year": 1999,
+    "min_words": 200,
+    "english_share_min": 0.08,
+    "tag_min_hits": 3,
+    "tag_min_density_per_1000_words": 1.0
+  },
+  "published_fields_note": "No speech text, titles, subtitles or speaker names are written to any output."
+}
