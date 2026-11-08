@@ -1,0 +1,60 @@
+{
+  "title": "Iowa spirits market: price, volume, forecast and budget",
+  "source": {
+    "name": "Iowa Liquor Sales",
+    "publisher": "Iowa Department of Revenue, Alcohol & Tax Operations Division, Alcohol Operations Bureau",
+    "landing_page": "https://data.iowa.gov/catalog/dataset/1051",
+    "catalog_record": "https://catalog.data.gov/dataset/iowa-liquor-sales-2026",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "licence_checked": "2026-11-08",
+    "access_level": "public",
+    "read_from": "bigquery-public-data.iowa_liquor_sales.sales (Google BigQuery public datasets)",
+    "attribution": "Source: Iowa Department of Revenue, Iowa Liquor Sales, licensed under CC BY 4.0. Changes: grouped into 11 product families and aggregated by month; forecasts and analysis are my own."
+  },
+  "scope": {
+    "from_month": "2017-01",
+    "to_month": "2026-04",
+    "families": 11,
+    "detail_categories": 44
+  },
+  "bigquery": {
+    "project": "project-57338774-2b06-4ac1-ba9",
+    "dataset": "liquor_market",
+    "location": "US",
+    "tables": [
+      "dim_category",
+      "fact_monthly",
+      "fc_budget_2026",
+      "fc_outlook",
+      "fc_total"
+    ],
+    "views": [
+      "m_year_family",
+      "m_month_total",
+      "m_pvm",
+      "m_pvm_family",
+      "m_budget_vs_actual",
+      "m_outlook_family",
+      "m_seasonality",
+      "dq_results"
+    ]
+  },
+  "control_totals_source": {
+    "description": "bigquery-public-data.iowa_liquor_sales.sales, 2017-01-01 to 2026-04-30",
+    "sales_usd": 3696194444,
+    "liters": 213650159,
+    "order_lines": 23308845
+  },
+  "extract_file": "data/bigquery_extract.txt",
+  "extract_sha256": "1407ad3a255924823513ec3c813912810270a64efa3485219687e34527960eb1",
+  "extract_date": "2026-11-08",
+  "personal_data": "none: store, supplier and product names are not read into any output",
+  "bigquery_dq_snapshot": {
+    "checked_at": "2026-11-08",
+    "pass": 11,
+    "warn": 0,
+    "fail": 0
+  },
+  "next_expected_update": "monthly (source updates monthly, with a delay of a few months)"
+}
