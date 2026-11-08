@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiments | Evangelos Papanastasis</title>
+<style>
+  :root { color-scheme: light; --page: #f9f9f7; --card: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+          --border: rgba(11,11,11,0.10); --accent: #2a78d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; --page: #0d0d0d; --card: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7;
+            --border: rgba(255,255,255,0.10); --accent: #3987e5; }
+  }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page); color: var(--ink); line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
+  h1 { font-size: 28px; margin: 0 0 6px; }
+  p.lead { color: var(--ink-2); margin: 0 0 28px; }
+  a.card { display: block; text-decoration: none; color: inherit; background: var(--card); border: 1px solid var(--border);
+           border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  a.card:hover, a.card:focus-visible { border-color: var(--accent); outline: none; }
+  .kicker { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .card h2 { font-size: 18px; margin: 4px 0 6px; }
+  .card p { margin: 0 0 10px; color: var(--ink-2); font-size: 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags span { font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; color: var(--ink-2); }
+  footer { margin-top: 28px; font-size: 13px; color: var(--muted); }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Experiments</h1>
+  <p class="lead">End-to-end data projects on public data: source → cloud warehouse → SQL → interactive report.</p>
+
+  <a class="card" href="ai-adoption-eu/dashboard/">
+    <div class="kicker">Digital transformation · Eurostat</div>
+    <h2>How EU enterprises use artificial intelligence</h2>
+    <p>One in five EU firms now uses AI, up from 8% in 2021, but large firms are pulling away from small ones.
+       Country ranking, uses, barriers and sectors, 2021–2025.</p>
+    <div class="tags"><span>BigQuery</span><span>SQL</span><span>Python</span><span>Interactive report</span><span>Claude</span></div>
+  </a>
+
+  <footer><a href="https://evanpapanast.github.io/portfolio/">Evangelos Papanastasis</a> ·
+    <a href="https://github.com/evanpapanast/experiments">Code on GitHub</a><br>
+    Open, official data only; no personal data. EU data © European Union, reused under Decision 2011/833/EU;
+    an independent analysis, not endorsed by the European Commission.</footer>
+</div>
+</body>
+</html>

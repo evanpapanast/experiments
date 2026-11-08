@@ -1,0 +1,32 @@
+indicator,label,short_label,indicator_group
+E_AI_TTM,Enterprises using AI technologies performing analysis of written language (text mining),Text mining,technology
+E_AI_TSR,Enterprises using AI technologies converting spoken language into machine-readable format (speech recognition),Speech recognition,technology
+E_AI_TNLG,"Enterprises using AI technologies generating written or spoken language or programming codes (natural language generation, speech synthesis)","Generating text, speech or code",technology
+E_AI_TIR,"Enterprises using AI technologies identifying objects or persons based on images (image recognition, image processing)",Image recognition,technology
+E_AI_TML,Enterprises using machine learning (e.g. deep learning) for data analysis,Machine learning for data analysis,technology
+E_AI_TPA,Enterprises using AI technologies automating different workflows or assisting in decision making (AI based software robotic process automation),Workflow automation / decision support,technology
+E_AI_TAR,"Enterprises using AI technologies enabling physical movement of machines via autonomous decisions based on observation of surroundings (autonomous robots, self-driving vehicles, autonomous drones)",Autonomous machines / robots,technology
+E_AI_TANY,"Enterprises using at least one of the AI technologies: AI_TTM, AI_TSR, AI_TNLG, AI_TIR, AI_TML, AI_TPA, AI_TAR, E_AI_TPVSG",Uses any AI technology,headline
+E_AI_PMS,Enterprises using AI technologies for marketing or sales,Marketing or sales,purpose
+E_AI_PPP,Enterprises using AI technologies for production processes,Production processes,purpose
+E_AI_PBA,Enterprises using AI technologies for organisation of business administration processes,Business administration,purpose
+E_AI_PME,Enterprises using AI technologies for management of enterprises,Management of the enterprise,purpose
+E_AI_PLOG,Enterprises using AI technologies for logistics,Logistics,purpose
+E_AI_PITS,Enterprises using AI technologies for ICT security,ICT security,purpose
+E_AI_PHR,Enterprises using AI technologies for human resources management or recruiting,HR or recruiting,purpose
+E_AI_ADOWN,Enterprises' AI technologies were developed by own employees,Developed by own employees,sourcing
+E_AI_AMOWN,Enterprises' AI technologies were commercial software or systems modified by own employees,Commercial software modified in-house,sourcing
+E_AI_AOS,Enterprises' AI technologies were open-source software or systems modified by own employees,Open-source modified in-house,sourcing
+E_AI_ARDY,Enterprises' AI technologies were commercial software or systems ready to use,Ready-to-use commercial software,sourcing
+E_AI_AEXT,Enterprises' AI technologies were  developed or modified by external providers,Developed by external providers,sourcing
+E_AI_BCST,"Enterprises do not use AI technologies, because the costs seem too high",Costs seem too high,barrier
+E_AI_BLE,"Enterprises do not use AI technologies, because of a lack of relevant expertise",Lack of expertise,barrier
+E_AI_BINC,"Enterprises do not use AI technologies, because of incompatibility with existing equipment, software or systems",Incompatible with existing systems,barrier
+E_AI_BDDT,"Enterprises do not use AI technologies, because of difficulties with availability or quality of the necessary data",Data availability or quality,barrier
+E_AI_BCDP,"Enterprises do not use AI technologies, because of concerns regarding violation of data protection and privacy",Data protection / privacy concerns,barrier
+E_AI_BLEG,"Enterprises do not use AI technologies, because of a lack of clarity about the legal consequences",Unclear legal consequences,barrier
+E_AI_BEC,"Enterprises do not use AI technologies, because of ethical considerations",Ethical considerations,barrier
+E_AI_BNU,"Enterprises do not use AI technologies, because artificial Intelligence technologies are not useful for Enterprise",AI not useful for the business,barrier
+E_AI_PFIN,"Enterprises using AI technologies for accounting, controlling or finance management","Accounting, controlling or finance",purpose
+E_AI_PRDI,Enterprises using AI technologies for research and development (R&D) or innovation activity,R&D or innovation,purpose
+E_AI_TPVSG,"Enterprises using AI technologies generating pictures, videos, sound/audio","Generating images, video or audio",technology

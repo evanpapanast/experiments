@@ -1,0 +1,58 @@
+{
+  "extracted_at": "2026-11-08T11:57:01+00:00",
+  "source": "Eurostat dissemination API (SDMX 2.1)",
+  "licence": "Eurostat: free re-use with attribution (Commission Decision 2011/833/EU)",
+  "next_expected_update": "2026-12-31",
+  "tables": {
+    "fact_ai_by_size": {
+      "source_dataset": "isoc_eb_ai",
+      "source_url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/isoc_eb_ai?format=SDMX-CSV&compressed=false",
+      "source_last_update": "2026-06-15",
+      "source_sha256": "411ffabeb5bf797e2229c61132a8face11b4c691ec1ee5f3693d55b3597929b8",
+      "output_sha256": "40c3235656e389dc65a9c96c906ce7410c8f325faeacbd25e32ddf4346d70c07",
+      "expected_rows": 26963,
+      "expected_value_sum": 432524.14,
+      "lineage": {
+        "raw_rows": 72527,
+        "kept_rows": 26963,
+        "excluded_out_of_scope": 44927,
+        "excluded_not_published": 637,
+        "of_which_confidential": 239,
+        "written_rows": 26963
+      }
+    },
+    "fact_ai_by_sector": {
+      "source_dataset": "isoc_eb_ain2",
+      "source_url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/isoc_eb_ain2?format=SDMX-CSV&compressed=false",
+      "source_last_update": "2026-06-15",
+      "source_sha256": "d6268c99064d0370fb5770e1cc24982979ad6425e40c41ddf927b99cc6d3da72",
+      "output_sha256": "35bc8113207ede64299a26dfa9b4e984953415837af8a56d384ca1b294c7bea1",
+      "expected_rows": 47700,
+      "expected_value_sum": 313097.23,
+      "lineage": {
+        "raw_rows": 684190,
+        "kept_rows": 47700,
+        "excluded_out_of_scope": 627809,
+        "excluded_not_published": 8681,
+        "of_which_confidential": 2985,
+        "written_rows": 47700
+      }
+    },
+    "dim_geo": {
+      "output_sha256": "91346a5d964c629cb8d1e5acd51046b1342b3bce23a5f76eeddf808b368f3292",
+      "expected_rows": 36
+    },
+    "dim_indicator": {
+      "output_sha256": "e19e6c5085c845ff9fae732d70581ddce37eaed131197c719c4a058f6bfc56ff",
+      "expected_rows": 31
+    },
+    "dim_sector": {
+      "output_sha256": "3bfeea7958ca973d0e73ac309997458705c041df0c65d928a319455e3ee5b7c9",
+      "expected_rows": 50
+    },
+    "dim_size_class": {
+      "output_sha256": "c98711bd6df6134385ae1340b28b21522e4ba670d127caba7651e9f29052d14e",
+      "expected_rows": 8
+    }
+  }
+}

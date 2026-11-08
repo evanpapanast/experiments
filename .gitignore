@@ -1,0 +1,22 @@
+# Raw downloads (re-created by the extract scripts)
+raw/
+**/raw/
+
+# Credentials: never commit
+*.json.key
+*service-account*.json
+.env
+.env.*
+credentials*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

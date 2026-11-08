@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI adoption in EU enterprises | Evangelos Papanastasis</title>
+<meta name="description" content="Interactive report on how EU enterprises use artificial intelligence, built on Eurostat data with BigQuery and SQL.">
+<style>
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --border: rgba(11,11,11,0.10);
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7;
+    --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a;
+    --muted-mark: #c9c8c0; --ref: #0b0b0b; --up: #006300; --down: #b42d2d;
+    --accent-wash: rgba(42,120,214,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --border: rgba(255,255,255,0.10);
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --axis: #383835;
+      --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+      --muted-mark: #4a4a46; --ref: #f0efec; --up: #0ca30c; --down: #e66767;
+      --accent-wash: rgba(57,135,229,0.14);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page); color: var(--text-primary);
+    min-height: 100vh; line-height: 1.45;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 48px; }
+  header h1 { font-size: 26px; margin: 0 0 4px; font-weight: 650; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+  .meta { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+  .meta a { color: inherit; }
+  .filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; margin: 22px 0 14px; }
+  .filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--text-secondary); gap: 4px; }
+  select { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--axis);
+           background: var(--surface-1); color: var(--text-primary); min-width: 180px; }
+  nav { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--grid); margin-bottom: 18px; }
+  nav button { font: inherit; font-size: 14px; background: none; border: 0; padding: 10px 12px; cursor: pointer;
+               color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav button[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--series-1); font-weight: 600; }
+  nav button:focus-visible, .card button:focus-visible, select:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(12, 1fr); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+  .span-12 { grid-column: span 12; } .span-8 { grid-column: span 8; } .span-6 { grid-column: span 6; }
+  .span-4 { grid-column: span 4; } .span-3 { grid-column: span 3; }
+  @media (max-width: 860px) { .span-8, .span-6, .span-4 { grid-column: span 12; } .span-3 { grid-column: span 6; } .tile .value.hero { font-size: 36px; } }
+  .card-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 8px; }
+  .card h2 { font-size: 15px; margin: 0; font-weight: 600; }
+  .card .sub { font-size: 13px; color: var(--text-secondary); margin: 2px 0 0; }
+  .card button.tbl { font: inherit; font-size: 12px; color: var(--text-secondary); background: none;
+                     border: 1px solid var(--axis); border-radius: 6px; padding: 3px 8px; cursor: pointer; white-space: nowrap; }
+  .tile .label { font-size: 13px; color: var(--text-secondary); }
+  .tile .value { font-size: 32px; font-weight: 600; margin: 4px 0 2px; }
+  .tile .value.hero { font-size: 48px; line-height: 1.1; }
+  .tile .delta { font-size: 13px; color: var(--text-secondary); }
+  .delta .up { color: var(--up); font-weight: 600; } .delta .down { color: var(--down); font-weight: 600; }
+  .insights { margin: 0; padding-left: 18px; font-size: 14px; }
+  .insights li { margin: 6px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-secondary); margin: 2px 0 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .key-line { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
+  .key-rect { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .key-tick { width: 2px; height: 12px; display: inline-block; background: var(--ref); }
+  svg text { font-family: inherit; }
+  .axis-text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .lbl { fill: var(--text-primary); font-size: 12px; }
+  .lbl-2 { fill: var(--text-secondary); font-size: 12px; }
+  .val { fill: var(--text-secondary); font-size: 11px; font-variant-numeric: tabular-nums; paint-order: stroke; stroke: var(--surface-1); stroke-width: 3px; }
+  .hit { fill: transparent; cursor: default; }
+  .row-hit:hover .bar, .row-hit:focus .bar { filter: brightness(1.12); }
+  .row-hit:focus { outline: none; }
+  .row-hit:focus .hit { stroke: var(--series-1); stroke-width: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--text-muted); font-size: 14px; padding: 24px 0; }
+  .note { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; }
+  #tip { position: fixed; pointer-events: none; z-index: 10; background: var(--surface-1); color: var(--text-primary);
+         border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px;
+         box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none; min-width: 140px; }
+  #tip .t { color: var(--text-secondary); margin-bottom: 4px; }
+  #tip .r { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+  #tip .r b { font-variant-numeric: tabular-nums; }
+  #tip .r span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .about p, .about li { font-size: 14px; color: var(--text-secondary); }
+  .dq-sum { display: flex; flex-wrap: wrap; gap: 18px; margin: 6px 0 14px; font-size: 14px; }
+  .dq-sum b { font-size: 22px; margin-right: 6px; }
+  .st { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .st i { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+          color: #fff; font-style: normal; font-size: 11px; line-height: 1; }
+  .st.PASS i { background: #0ca30c; } .st.WARN i { background: #fab219; color: #0b0b0b; } .st.FAIL i { background: #d03b3b; }
+  .dq-table td:nth-child(3) { color: var(--text-secondary); }
+  .dq-find { font-size: 13px; color: var(--text-secondary); margin: 4px 0 0; padding-left: 18px; }
+  details { margin-top: 12px; font-size: 14px; } summary { cursor: pointer; font-weight: 600; }
+  .about h2 { margin-top: 0; }
+  .about code { font-size: 12.5px; }
+  .pipeline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 4px; font-size: 13px; }
+  .pipeline span.step { border: 1px solid var(--axis); border-radius: 8px; padding: 6px 10px; color: var(--text-primary); }
+  .pipeline span.arrow { color: var(--text-muted); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <header>
+    <h1>How EU enterprises use artificial intelligence</h1>
+    <p>Adoption, use cases, barriers and sectors for enterprises with 10+ employees, 2021–2025.</p>
+    <div class="meta">Source: Eurostat, ICT usage and e-commerce in enterprises (<code>isoc_eb_ai</code>, <code>isoc_eb_ain2</code>) ·
+      © European Union, reused under Decision 2011/833/EU; not endorsed by Eurostat or the European Commission ·
+      <a href="https://github.com/evanpapanast/experiments/tree/main/ai-adoption-eu">Code on GitHub</a></div>
+  </header>
+
+  <div class="filters" role="group" aria-label="Filters">
+    <label>Country<select id="f-geo"></select></label>
+    <label>Year<select id="f-year"></select></label>
+  </div>
+
+  <nav role="tablist" aria-label="Report pages">
+    <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-tab="countries" aria-selected="false">Country ranking</button>
+    <button role="tab" data-tab="size" aria-selected="false">Company size</button>
+    <button role="tab" data-tab="uses" aria-selected="false">Uses &amp; technologies</button>
+    <button role="tab" data-tab="barriers" aria-selected="false">Barriers</button>
+    <button role="tab" data-tab="sectors" aria-selected="false">Sectors</button>
+    <button role="tab" data-tab="about" aria-selected="false">About &amp; data quality</button>
+  </nav>
+
+  <section data-page="overview" class="grid">
+    <div class="card tile span-3"><div class="label" id="t1-l"></div><div class="value hero" id="t1-v"></div><div class="delta" id="t1-d"></div></div>
+    <div class="card tile span-3"><div class="label">EU average</div><div class="value" id="t2-v"></div><div class="delta" id="t2-d"></div></div>
+    <div class="card tile span-3"><div class="label">Rank among 27 EU countries</div><div class="value" id="t3-v"></div><div class="delta" id="t3-d"></div></div>
+    <div class="card tile span-3"><div class="label">Large vs small firms</div><div class="value" id="t4-v"></div><div class="delta" id="t4-d"></div></div>
+    <div class="card span-8" id="c-trend"></div>
+    <div class="card span-4"><div class="card-head"><div><h2>Key insights</h2><p class="sub" id="ins-sub"></p></div></div><ul class="insights" id="insights"></ul></div>
+  </section>
+
+  <section data-page="countries" class="grid" hidden>
+    <div class="card span-12" id="c-rank"></div>
+  </section>
+
+  <section data-page="size" class="grid" hidden>
+    <div class="card span-6" id="c-size-trend"></div>
+    <div class="card span-6" id="c-size-gap"></div>
+  </section>
+
+  <section data-page="uses" class="grid" hidden>
+    <div class="card span-12" id="c-purpose"></div>
+    <div class="card span-12" id="c-tech"></div>
+    <div class="card span-12" id="c-sourcing"></div>
+  </section>
+
+  <section data-page="barriers" class="grid" hidden>
+    <div class="card span-12" id="c-barriers"></div>
+  </section>
+
+  <section data-page="sectors" class="grid" hidden>
+    <div class="card span-12" id="c-sectors"></div>
+  </section>
+
+  <section data-page="about" class="grid" hidden>
+    <div class="card span-12 about">
+      <h2>About this report</h2>
+      <p>This is one of my experiments: I wanted to see how quickly I could take a public dataset from source to a
+        Power BI-style report using a cloud data warehouse, SQL and an AI assistant (Claude), with everything versioned on GitHub.</p>
+      <div class="pipeline" aria-label="Data pipeline">
+        <span class="step">Eurostat API</span><span class="arrow">→</span>
+        <span class="step">Python: extract &amp; tidy</span><span class="arrow">→</span>
+        <span class="step">Google BigQuery (star schema)</span><span class="arrow">→</span>
+        <span class="step">SQL reporting views</span><span class="arrow">→</span>
+        <span class="step">Data quality gate (22 checks)</span><span class="arrow">→</span>
+        <span class="step">Interactive HTML report</span>
+      </div>
+      <h2 style="margin-top:18px">Definitions</h2>
+      <ul>
+        <li><b>Uses AI</b>: the enterprise uses at least one of eight AI technologies (seven before 2025) (text mining, speech recognition,
+          generating text/speech/code, image recognition, machine learning, workflow automation, autonomous machines,
+          generating images/video/audio).</li>
+        <li><b>Population</b>: enterprises with 10 or more employees in industry and non-financial services
+          (NACE C–N excluding K, plus 95.1). Small = 10–49, medium = 50–249, large = 250+ employees.</li>
+        <li><b>Uses</b> and <b>how AI was sourced</b> are shown as a share of enterprises that use AI.
+          <b>Barriers</b> are shown as a share of enterprises that considered AI but do not use it.</li>
+        <li>The survey was not run on AI in 2022. Some questions change between waves, so a few indicators exist only for some years.</li>
+        <li>Values flagged by Eurostat as low reliability (u) or with a break in series (b) are marked in tooltips and tables.</li>
+      </ul>
+      <p class="note">Built by Evangelos Papanastasis · <a href="https://evanpapanast.github.io/portfolio/">Portfolio</a></p>
+    </div>
+    <div class="card span-12" id="c-dq"></div>
+  </section>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="dq.js"></script>
+<script>
+(function () {
+  const D = window.AI_DATA;
+  const EU = 'EU27_2020';
+  const FLAGS = { u: 'low reliability', b: 'break in series', d: 'definition differs', bu: 'break in series, low reliability' };
+  const state = { geo: 'AT', year: 2025, tab: 'overview' };
+
+  // ---------- data access ----------
+  const countryRows = D.countries;
+  const name = {}; countryRows.forEach(r => { name[r.geo] = r.geo === EU ? 'EU average' : r.country; });
+  const years = [...new Set(countryRows.map(r => r.year))].sort();
+  const cAt = (geo, y) => countryRows.find(r => r.geo === geo && r.year === y);
+  const sizeAt = (geo, y) => D.size.find(r => r.geo === geo && r.year === y);
+  const profile = (geo, y, grp) => D.profile.filter(r => r.geo === geo && r.year === y && r.grp === grp);
+  const sectors = (geo, y) => D.sectors.filter(r => r.geo === geo && r.year === y);
+  const r1 = v => (Math.round((v + Math.sign(v) * 1e-9) * 10) / 10).toFixed(1);
+  const fmt = v => v == null ? '–' : r1(v) + '%';
+  const fmtPP = v => v == null ? '–' : (v > 0 ? '+' : '') + r1(v) + ' pp';
+  const flagTxt = f => f && FLAGS[f] ? ` (${FLAGS[f]})` : '';
+
+  // ---------- filters ----------
+  const geoSel = document.getElementById('f-geo'), yearSel = document.getElementById('f-year');
+  const geos = [...new Set(countryRows.map(r => r.geo))].filter(g => g !== 'EA');
+  const members = geos.filter(g => countryRows.find(r => r.geo === g).is_eu_member === 1).sort((a, b) => name[a].localeCompare(name[b]));
+  const others = geos.filter(g => g !== EU && !members.includes(g)).sort((a, b) => name[a].localeCompare(name[b]));
+  const addGroup = (label, list) => { const og = document.createElement('optgroup'); og.label = label;
+    list.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = name[g]; og.appendChild(o); }); geoSel.appendChild(og); };
+  const oEU = document.createElement('option'); oEU.value = EU; oEU.textContent = 'EU (27 countries)'; geoSel.appendChild(oEU);
+  addGroup('EU member states', members); addGroup('Other European countries', others);
+  years.slice().reverse().forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; yearSel.appendChild(o); });
+  geoSel.value = state.geo; yearSel.value = state.year;
+  geoSel.onchange = () => { state.geo = geoSel.value; render(); };
+  yearSel.onchange = () => { state.year = +yearSel.value; render(); };
+
+  // ---------- tabs ----------
+  const tabs = [...document.querySelectorAll('nav button')];
+  tabs.forEach(b => b.onclick = () => selectTab(b.dataset.tab));
+  document.querySelector('nav').addEventListener('keydown', e => {
+    const i = tabs.findIndex(t => t.dataset.tab === state.tab);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]; selectTab(n.dataset.tab); n.focus();
+    }
+  });
+  function selectTab(t) {
+    state.tab = t;
+    tabs.forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+    document.querySelectorAll('section[data-page]').forEach(s => s.hidden = s.dataset.page !== t);
+    render();
+  }
+
+  // ---------- tooltip ----------
+  const tip = document.getElementById('tip');
+  function showTip(evt, title, rows) {
+    tip.replaceChildren();
+    const t = document.createElement('div'); t.className = 't'; t.textContent = title; tip.appendChild(t);
+    rows.forEach(r => {
+      const row = document.createElement('div'); row.className = 'r';
+      const s = document.createElement('span');
+      if (r.color) { const k = document.createElement('i'); k.className = 'key-line'; k.style.background = r.color; s.appendChild(k); }
+      s.appendChild(document.createTextNode(r.label));
+      const b = document.createElement('b'); b.textContent = r.value;
+      row.append(b, s); tip.appendChild(row);
+    });
+    tip.style.display = 'block';
+    let x, y;
+    if (evt.clientX !== undefined && evt.type !== 'focus') { x = evt.clientX; y = evt.clientY; }
+    else { const bb = evt.target.getBoundingClientRect(); x = bb.left + bb.width / 2; y = bb.top; }
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.min(window.innerWidth - w - 8, x + 14) + 'px';
+    tip.style.top = Math.max(8, y - h - 10) + 'px';
+  }
+  const hideTip = () => { tip.style.display = 'none'; };
+
+  // ---------- generic helpers ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const txt = (parent, x, y, s, cls, anchor = 'start') => { const t = el('text', { x, y, class: cls, 'text-anchor': anchor }, parent); t.textContent = s; return t; };
+  const css = v => getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(v).trim();
+  const niceScale = m => { const step = [1, 2, 5, 10, 20, 25].find(st => m / st <= 5) || 25; const max = Math.max(step, Math.ceil(m / step) * step);
+    const ticks = []; for (let t = 0; t <= max + 1e-9; t += step) ticks.push(t); return { max, ticks }; };
+
+  // Card shell with title, subtitle, legend, chart/table toggle
+  function card(id, title, sub, legend, drawChart, tableSpec) {
+    const root = document.getElementById(id); root.replaceChildren();
+    const head = document.createElement('div'); head.className = 'card-head';
+    const h = document.createElement('div');
+    const h2 = document.createElement('h2'); h2.textContent = title; h.appendChild(h2);
+    if (sub) { const p = document.createElement('p'); p.className = 'sub'; p.textContent = sub; h.appendChild(p); }
+    head.appendChild(h);
+    const btn = document.createElement('button'); btn.className = 'tbl'; btn.type = 'button';
+    root.appendChild(head);
+    if (legend && legend.length) {
+      const lg = document.createElement('div'); lg.className = 'legend';
+      legend.forEach(l => { const s = document.createElement('span'); const k = document.createElement('i');
+        k.className = l.kind === 'line' ? 'key-line' : l.kind === 'tick' ? 'key-tick' : 'key-rect';
+        if (l.color) k.style.background = l.color; s.append(k, document.createTextNode(l.label)); lg.appendChild(s); });
+      root.appendChild(lg);
+    }
+    const body = document.createElement('div'); root.appendChild(body);
+    const showTable = root.dataset.view === 'table';
+    btn.textContent = showTable ? 'Show chart' : 'Show table';
+    btn.setAttribute('aria-pressed', showTable);
+    btn.onclick = () => { root.dataset.view = showTable ? 'chart' : 'table'; render(); };
+    head.appendChild(btn);
+    if (showTable) body.appendChild(buildTable(tableSpec)); else drawChart(body);
+    return root;
+  }
+  function buildTable({ cols, rows }) {
+    const t = document.createElement('table'); const tr = document.createElement('tr');
+    cols.forEach((c, i) => { const th = document.createElement('th'); th.textContent = c; if (i) th.className = 'num'; tr.appendChild(th); });
+    const thead = document.createElement('thead'); thead.appendChild(tr); t.appendChild(thead);
+    const tb = document.createElement('tbody');
+    rows.forEach(r => { const row = document.createElement('tr');
+      r.forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (i) td.className = 'num'; row.appendChild(td); });
+      tb.appendChild(row); });
+    t.appendChild(tb); return t;
+  }
+  function empty(body, msg) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = msg; body.appendChild(p); }
+
+  // ---------- line chart (years on x, % on y) ----------
+  function lineChart(body, series, opts = {}) {
+    const W = Math.max(320, body.clientWidth || 600), H = opts.height || 280;
+    const longest = Math.max(...series.map(s => (s.name + ' 00.0%').length));
+    const m = { t: 12, r: Math.min(190, longest * 6.6 + 22), b: 28, l: 36 };
+    const xs = years, all = series.flatMap(s => s.pts.map(p => p[1])).filter(v => v != null);
+    const sc = niceScale(Math.max(...all) * 1.02), yMax = sc.max;
+    const x = y => m.l + (y - xs[0]) / (xs[xs.length - 1] - xs[0]) * (W - m.l - m.r);
+    const y = v => m.t + (1 - v / yMax) * (H - m.t - m.b);
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': opts.aria || '' }, body);
+    sc.ticks.forEach(t => { el('line', { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), stroke: css(t === 0 ? '--axis' : '--grid'), 'stroke-width': 1 }, svg);
+      txt(svg, m.l - 6, y(t) + 4, Math.round(t) + '%', 'axis-text', 'end'); });
+    xs.forEach(yr => txt(svg, x(yr), H - 8, yr, 'axis-text', 'middle'));
+    // end labels with simple de-collision
+    const ends = [];
+    series.forEach(s => {
+      const pts = s.pts.filter(p => p[1] != null);
+      if (!pts.length) return;
+      el('path', { d: pts.map((p, i) => (i ? 'L' : 'M') + x(p[0]) + ',' + y(p[1])).join(''), fill: 'none', stroke: s.color,
+        'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+      pts.forEach(p => el('circle', { cx: x(p[0]), cy: y(p[1]), r: 4, fill: s.color, stroke: css('--surface-1'), 'stroke-width': 2 }, svg));
+      const last = pts[pts.length - 1]; ends.push({ s, yy: y(last[1]), v: last[1], x: x(last[0]) });
+    });
+    ends.sort((a, b) => a.yy - b.yy);
+    for (let i = 1; i < ends.length; i++) if (ends[i].yy - ends[i - 1].yy < 15) ends[i].ly = (ends[i - 1].ly ?? ends[i - 1].yy) + 15;
+    ends.forEach(e => { const ly = e.ly ?? e.yy;
+      if (Math.abs(ly - e.yy) > 2) el('line', { x1: e.x + 6, y1: e.yy, x2: e.x + 12, y2: ly, stroke: css('--axis') }, svg);
+      txt(svg, e.x + 14, ly + 4, `${e.s.name} ${fmt(e.v)}`, 'lbl-2'); });
+    // crosshair
+    const cross = el('line', { y1: m.t, y2: H - m.b, stroke: css('--axis'), 'stroke-width': 1, visibility: 'hidden' }, svg);
+    const hit = el('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, class: 'hit', tabindex: 0 }, svg);
+    let fi = xs.length - 1;
+    const at = (yr, evt) => { cross.setAttribute('x1', x(yr)); cross.setAttribute('x2', x(yr)); cross.setAttribute('visibility', 'visible');
+      showTip(evt, String(yr), series.map(s => { const p = s.pts.find(q => q[0] === yr);
+        return { label: s.name + (p && p[2] ? flagTxt(p[2]) : ''), value: fmt(p ? p[1] : null), color: s.color }; })); };
+    hit.addEventListener('pointermove', evt => { const bb = svg.getBoundingClientRect(); const px = (evt.clientX - bb.left) * W / bb.width;
+      const yr = xs.reduce((a, b) => Math.abs(x(b) - px) < Math.abs(x(a) - px) ? b : a); at(yr, evt); });
+    hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); hideTip(); });
+    hit.addEventListener('focus', evt => at(xs[fi], evt)); hit.addEventListener('blur', () => { cross.setAttribute('visibility', 'hidden'); hideTip(); });
+    hit.addEventListener('keydown', evt => { if (evt.key === 'ArrowLeft' || evt.key === 'ArrowRight') {
+      fi = Math.max(0, Math.min(xs.length - 1, fi + (evt.key === 'ArrowRight' ? 1 : -1))); at(xs[fi], { type: 'focus', target: hit }); evt.preventDefault(); } });
+  }
+
+  // ---------- horizontal bars with optional reference tick ----------
+  function hbar(body, rows, opts = {}) {
+    if (!rows.length) return empty(body, opts.emptyMsg || 'No data for this selection.');
+    const W = Math.max(320, body.clientWidth || 600), rowH = 26, barH = 16;
+    const labelW = Math.min(opts.labelW || 230, W * 0.42);
+    const m = { t: 6, r: 52, b: 24, l: labelW };
+    const H = m.t + rows.length * rowH + m.b;
+    const sc = niceScale(Math.max(...rows.map(r => Math.max(r.v ?? 0, r.ref ?? 0)))), max = sc.max;
+    const unit = opts.unit || '%', vf = v => v == null ? '–' : r1(v) + (unit === '%' ? '%' : ' pp');
+    const x = v => m.l + v / max * (W - m.l - m.r);
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': opts.aria || '' }, body);
+    sc.ticks.forEach(t => { el('line', { x1: x(t), x2: x(t), y1: m.t, y2: H - m.b, stroke: css(t === 0 ? '--axis' : '--grid'), 'stroke-width': 1 }, svg);
+      txt(svg, x(t), H - 8, Math.round(t) + (unit === '%' ? '%' : ''), 'axis-text', 'middle'); });
+    if (opts.refLine != null) {
+      el('line', { x1: x(opts.refLine), x2: x(opts.refLine), y1: m.t, y2: H - m.b, stroke: css('--ref'), 'stroke-width': 1.5 }, svg);
+    }
+    rows.forEach((r, i) => {
+      const cy = m.t + i * rowH + rowH / 2;
+      const g = el('g', { class: 'row-hit', tabindex: 0, role: 'listitem' }, svg);
+      el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, class: 'hit' }, g);
+      let label = r.label; const maxChars = Math.floor(labelW / 6.6);
+      if (label.length > maxChars) label = label.slice(0, maxChars - 1) + '…';
+      const lt = txt(g, labelW - 10, cy + 4, label, r.hi ? 'lbl' : 'lbl-2', 'end'); if (r.hi) lt.setAttribute('font-weight', '600');
+      if (r.v != null) {
+        const w = Math.max(0, x(r.v) - m.l), rr = Math.min(4, w);
+        el('path', { class: 'bar', fill: r.color || (r.hi ? css('--series-1') : css('--muted-mark')),
+          d: `M${m.l},${cy - barH / 2} h${w - rr} a${rr},${rr} 0 0 1 ${rr},${rr} v${barH - 2 * rr} a${rr},${rr} 0 0 1 -${rr},${rr} h-${w - rr} Z` }, g);
+        const vx = (r.ref != null && r.ref > r.v - 1 && r.ref < r.v + 9) ? Math.max(x(r.v), x(r.ref)) + 7 : x(r.v) + 6;
+        txt(g, vx, cy + 4, vf(r.v) + (r.flag ? '*' : ''), 'val');
+      }
+      if (r.ref != null) el('rect', { x: x(r.ref) - 1, y: cy - barH / 2 - 3, width: 2, height: barH + 6, fill: css('--ref') }, g);
+      const tipRows = [{ label: (opts.valueName || name[state.geo]) + flagTxt(r.flag), value: vf(r.v), color: r.color || css('--series-1') }];
+      if (r.ref != null) tipRows.push({ label: opts.refName || 'EU average', value: vf(r.ref), color: css('--ref') });
+      const on = evt => showTip(evt, r.label, tipRows);
+      g.addEventListener('pointermove', on); g.addEventListener('focus', on);
+      g.addEventListener('pointerleave', hideTip); g.addEventListener('blur', hideTip);
+    });
+    svg.setAttribute('role', 'list');
+    if (rows.some(r => r.flag)) { const p = document.createElement('p'); p.className = 'note'; p.textContent = '* Eurostat flag (e.g. low reliability or break in series); see tooltip.'; body.appendChild(p); }
+  }
+
+  // ---------- pages ----------
+  function overview() {
+    const g = state.geo, y = state.year, c = cAt(g, y), e = cAt(EU, y), s = sizeAt(g, y);
+    const isEU = g === EU;
+    document.getElementById('t1-l').textContent = `${isEU ? 'EU' : name[g]}: enterprises using AI, ${y}`;
+    document.getElementById('t1-v').textContent = fmt(c?.v);
+    setDelta('t1-d', c?.chg, prevYear(y));
+    document.getElementById('t2-v').textContent = fmt(e?.v);
+    setDelta('t2-d', e?.chg, prevYear(y));
+    document.getElementById('t3-v').textContent = c?.eu_rank ? `#${c.eu_rank}` : '–';
+    document.getElementById('t3-d').textContent = c?.eu_rank ? `in ${y}` : (isEU ? 'Select a member state' : 'Not an EU member state');
+    const ratio = s && s.s ? (s.l / s.s) : null;
+    document.getElementById('t4-v').textContent = ratio ? ratio.toFixed(1) + '×' : '–';
+    document.getElementById('t4-d').textContent = s ? `Large ${fmt(s.l)} vs small ${fmt(s.s)}` : '';
+
+    const series = [{ name: isEU ? 'EU' : name[g], color: css('--series-1'), pts: years.map(yr => { const r = cAt(g, yr); return [yr, r?.v ?? null, r?.flag]; }) }];
+    if (!isEU) series.push({ name: 'EU', color: css('--text-muted'), pts: years.map(yr => [yr, cAt(EU, yr)?.v ?? null]) });
+    card('c-trend', 'Share of enterprises using AI', 'Enterprises with 10+ employees, % (no survey in 2022)',
+      series.length > 1 ? series.map(s => ({ label: s.name, color: s.color, kind: 'line' })) : [],
+      b => lineChart(b, series, { aria: 'Line chart of AI adoption over time' }),
+      { cols: ['Year', ...series.map(s => s.name)], rows: years.map(yr => [yr, ...series.map(s => fmt(s.pts.find(p => p[0] === yr)[1]))]) });
+
+    // insights
+    document.getElementById('ins-sub').textContent = `${isEU ? 'EU' : name[g]}, ${y}`;
+    const ul = document.getElementById('insights'); ul.replaceChildren();
+    const add = t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); };
+    const first = cAt(g, years[0]);
+    if (c && first) add(`AI use went from ${fmt(first.v)} in ${years[0]} to ${fmt(cAt(g, years[years.length - 1])?.v)} in ${years[years.length - 1]}.`);
+    if (!isEU && c && e) add(`${fmt(c.v)} of enterprises use AI in ${y}: ${Math.abs(c.v - e.v).toFixed(1)} pp ${c.v >= e.v ? 'above' : 'below'} the EU average${c.eu_rank ? `, ranking #${c.eu_rank} of 27` : ''}.`);
+    if (s && s.s && s.l) add(`Large firms are ${(s.l / s.s).toFixed(1)}× as likely to use AI as small firms (${fmt(s.l)} vs ${fmt(s.s)}).`);
+    const pur = profile(g, y, 'purpose').sort((a, b) => b.v - a.v);
+    if (pur.length) add(`Most common use among AI users: ${pur[0].label.toLowerCase()} (${fmt(pur[0].v)}).`);
+    const bar = profile(g, y, 'barrier').sort((a, b) => b.v - a.v);
+    if (bar.length) add(`Top barrier for firms that considered AI: ${bar[0].label.toLowerCase()} (${fmt(bar[0].v)}).`);
+    const sec = sectors(g, y).sort((a, b) => b.v - a.v);
+    if (sec.length) add(`Leading sector: ${sec[0].sector} (${fmt(sec[0].v)}); lowest: ${sec[sec.length - 1].sector} (${fmt(sec[sec.length - 1].v)}).`);
+  }
+  function prevYear(y) { const i = years.indexOf(y); return i > 0 ? years[i - 1] : null; }
+  function setDelta(id, chg, py) {
+    const n = document.getElementById(id); n.replaceChildren();
+    if (chg == null || py == null) { n.textContent = 'No earlier wave'; return; }
+    const s = document.createElement('span'); s.className = chg >= 0 ? 'up' : 'down';
+    s.textContent = (chg >= 0 ? '▲ ' : '▼ ') + fmtPP(chg); n.append(s, document.createTextNode(` vs ${py}`));
+  }
+
+  function countries() {
+    const y = state.year, e = cAt(EU, y);
+    const rows = countryRows.filter(r => r.year === y && r.is_eu_member === 1).sort((a, b) => b.v - a.v)
+      .map(r => ({ label: `${r.eu_rank}. ${r.country}`, v: r.v, flag: r.flag, hi: r.geo === state.geo }));
+    card('c-rank', `AI adoption by EU country, ${y}`, 'Enterprises with 10+ employees, %. Selected country highlighted; line = EU average.',
+      [{ label: name[state.geo] === 'EU average' ? 'EU member states' : name[state.geo], color: css('--series-1') },
+       ...(state.geo !== EU ? [{ label: 'Other member states', color: css('--muted-mark') }] : []),
+       { label: `EU average ${fmt(e?.v)}`, kind: 'tick' }],
+      b => hbar(b, state.geo === EU ? rows.map(r => ({ ...r, hi: true })) : rows,
+        { refLine: e?.v, labelW: 170, valueName: 'Share using AI', aria: 'Ranked bar chart of AI adoption by country' }),
+      { cols: ['Country', '% using AI', 'Change vs previous wave'], rows: countryRows.filter(r => r.year === y && r.is_eu_member === 1)
+        .sort((a, b) => b.v - a.v).map(r => [`${r.eu_rank}. ${r.country}`, fmt(r.v) + (r.flag ? ' *' : ''), fmtPP(r.chg)]) });
+  }
+
+  function size() {
+    const g = state.geo, nm = g === EU ? 'EU' : name[g];
+    const series = [
+      { name: 'Large (250+)', color: css('--series-1'), pts: years.map(yr => [yr, sizeAt(g, yr)?.l ?? null]) },
+      { name: 'Medium (50–249)', color: css('--series-2'), pts: years.map(yr => [yr, sizeAt(g, yr)?.m ?? null]) },
+      { name: 'Small (10–49)', color: css('--series-3'), pts: years.map(yr => [yr, sizeAt(g, yr)?.s ?? null]) }];
+    card('c-size-trend', `${nm}: AI adoption by company size`, '% of enterprises in each size class',
+      series.map(s => ({ label: s.name, color: s.color, kind: 'line' })),
+      b => lineChart(b, series, { aria: 'AI adoption by company size over time' }),
+      { cols: ['Year', ...series.map(s => s.name)], rows: years.map(yr => [yr, ...series.map(s => fmt(s.pts.find(p => p[0] === yr)[1]))]) });
+    const y = state.year;
+    const rows = D.size.filter(r => r.year === y && r.gap != null && countryRows.find(c => c.geo === r.geo && c.is_eu_member === 1))
+      .sort((a, b) => b.gap - a.gap).map(r => ({ label: name[r.geo], v: r.gap, hi: r.geo === g }));
+    const eg = sizeAt(EU, y)?.gap;
+    card('c-size-gap', `Gap between large and small firms, ${y}`, 'Percentage points (large minus small). Line = EU gap.',
+      [{ label: `EU gap ${eg == null ? '–' : eg.toFixed(1) + ' pp'}`, kind: 'tick' }],
+      b => hbar(b, rows, { refLine: eg, labelW: 120, unit: 'pp', valueName: 'Gap', aria: 'Size gap by country' }),
+      { cols: ['Country', 'Small', 'Large', 'Gap (pp)'], rows: D.size.filter(r => r.year === y && r.gap != null && countryRows.find(c => c.geo === r.geo && c.is_eu_member === 1))
+        .sort((a, b) => b.gap - a.gap).map(r => [name[r.geo], fmt(r.s), fmt(r.l), r.gap.toFixed(1)]) });
+  }
+
+  function profileCard(id, grp, title, sub, emptyMsg) {
+    const g = state.geo, y = state.year, nm = g === EU ? 'EU' : name[g];
+    const mine = profile(g, y, grp), eu = profile(EU, y, grp);
+    const rows = mine.sort((a, b) => b.v - a.v).map(r => ({ label: r.label, v: r.v, ref: g === EU ? null : eu.find(e => e.label === r.label)?.v, hi: true }));
+    const legend = g === EU || !rows.some(r => r.ref != null) ? [] : [{ label: nm, color: css('--series-1') }, { label: 'EU average', kind: 'tick' }];
+    card(id, `${title}, ${nm} ${y}`, sub, legend,
+      b => hbar(b, rows, { emptyMsg: emptyMsg || `Eurostat did not ask this question for ${nm} in ${y}. Try another year.`, valueName: nm, aria: title }),
+      { cols: ['Item', nm, ...(g === EU ? [] : ['EU average'])], rows: rows.map(r => [r.label, fmt(r.v), ...(g === EU ? [] : [fmt(r.ref)])]) });
+  }
+  function uses() {
+    profileCard('c-purpose', 'purpose', 'What AI is used for', '% of enterprises that use AI');
+    profileCard('c-tech', 'technology', 'Which AI technologies', '% of all enterprises');
+    profileCard('c-sourcing', 'sourcing', 'How AI was sourced', '% of enterprises that use AI (several answers possible)');
+  }
+  function barriers() {
+    profileCard('c-barriers', 'barrier', 'Why enterprises do not use AI', '% of enterprises that considered using AI but did not (several answers possible)');
+  }
+  function sectorsPage() {
+    const g = state.geo, y = state.year, nm = g === EU ? 'EU' : name[g];
+    const eu = sectors(EU, y);
+    const rows = sectors(g, y).sort((a, b) => b.v - a.v).map(r => ({ label: r.sector, v: r.v, flag: r.flag, hi: true,
+      ref: g === EU ? null : eu.find(e => e.sector === r.sector)?.v }));
+    card('c-sectors', `AI adoption by sector, ${nm} ${y}`, '% of enterprises with 10+ employees in each sector. Sectors without published data for this country are not shown.',
+      g === EU ? [] : [{ label: nm, color: css('--series-1') }, { label: 'EU average', kind: 'tick' }],
+      b => hbar(b, rows, { labelW: 250, valueName: nm, aria: 'AI adoption by sector' }),
+      { cols: ['Sector', nm, ...(g === EU ? [] : ['EU average'])], rows: rows.map(r => [r.label, fmt(r.v) + (r.flag ? ' *' : ''), ...(g === EU ? [] : [fmt(r.ref)])]) });
+  }
+
+  function dq() {
+    const Q = window.DQ_RESULTS, root = document.getElementById('c-dq');
+    root.replaceChildren();
+    const mk = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e; };
+    root.appendChild(mk('h2', 'Data quality checks'));
+    if (!Q) { root.appendChild(mk('p', 'Data quality results not available.', 'empty')); return; }
+    root.appendChild(mk('p', `Automated checks run on every refresh, in BigQuery and locally. Last run: ${Q.run_at}. ` +
+      'FAIL blocks publishing; WARN is published but reviewed.', 'sub'));
+    const sum = mk('div', null, 'dq-sum');
+    [['PASS', Q.pass, 'passed'], ['WARN', Q.warn, 'warnings'], ['FAIL', Q.fail, 'failed']].forEach(([k, n, l]) => {
+      const sp = mk('span'); const st = mk('span', null, 'st ' + k); st.appendChild(mk('i', k === 'PASS' ? '✓' : k === 'WARN' ? '!' : '✕'));
+      sp.append(st, mk('b', String(n)), document.createTextNode(l)); sum.appendChild(sp); });
+    root.appendChild(sum);
+    const t = mk('table', null, 'dq-table'), hr = mk('tr');
+    ['Check', 'Dimension', 'Rule', 'Result'].forEach(h => hr.appendChild(mk('th', h)));
+    const th = mk('thead'); th.appendChild(hr); t.appendChild(th);
+    const tb = mk('tbody');
+    Q.results.forEach(r => {
+      const tr = mk('tr'); tr.append(mk('td', r.check_id), mk('td', r.dimension));
+      const rule = mk('td', r.rule_text);
+      const f = Q.findings[r.check_id];
+      if (f && f.length) { const ul = mk('ul', null, 'dq-find'); f.forEach(x => ul.appendChild(mk('li', x)));
+        if (r.failed_rows > f.length) ul.appendChild(mk('li', `… ${r.failed_rows - f.length} more`)); rule.appendChild(ul); }
+      const st = mk('span', null, 'st ' + r.status); st.appendChild(mk('i', r.status === 'PASS' ? '✓' : r.status === 'WARN' ? '!' : '✕'));
+      st.appendChild(document.createTextNode(r.status + (r.failed_rows ? ` (${r.failed_rows})` : '')));
+      const td = mk('td'); td.appendChild(st);
+      tr.append(rule, td); tb.appendChild(tr);
+    });
+    t.appendChild(tb); root.appendChild(t);
+    const det = mk('details'); det.appendChild(mk('summary', 'Lineage: where every source row went'));
+    const lt = mk('table'); const lh = mk('tr');
+    ['Source table', 'Raw rows', 'Kept', 'Out of scope', 'Not published', 'of which confidential'].forEach((h, i) => { const c = mk('th', h); if (i) c.className = 'num'; lh.appendChild(c); });
+    const lth = mk('thead'); lth.appendChild(lh); lt.appendChild(lth); const ltb = mk('tbody');
+    Object.entries(Q.lineage).forEach(([k, l]) => { const tr = mk('tr'); tr.appendChild(mk('td', k));
+      [l.raw_rows, l.kept_rows, l.excluded_out_of_scope, l.excluded_not_published, l.of_which_confidential]
+        .forEach(v => tr.appendChild(mk('td', v.toLocaleString('en-US'), 'num'))); ltb.appendChild(tr); });
+    lt.appendChild(ltb); det.appendChild(lt);
+    det.appendChild(mk('p', 'Kept + out of scope + not published always equals the raw total. Confidential values are excluded, never estimated.', 'note'));
+    root.appendChild(det);
+    const a = mk('p', null, 'note'); const link = document.createElement('a');
+    link.href = 'https://github.com/evanpapanast/experiments/blob/main/ai-adoption-eu/DATA_GOVERNANCE.md'; link.textContent = 'Full data governance documentation';
+    a.appendChild(link); root.appendChild(a);
+  }
+
+  function render() {
+    hideTip();
+    ({ overview, countries, size, uses, barriers, sectors: sectorsPage, about: dq })[state.tab]();
+  }
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>

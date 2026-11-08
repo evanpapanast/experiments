@@ -1,0 +1,27 @@
+name: Data quality gate
+
+# Runs the data quality checks on every push and pull request.
+# A FAIL-severity check makes this workflow fail, so a bad change is visible before it is relied on.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ai-adoption-eu:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-adoption-eu/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r ../requirements.txt
+      - name: Run data quality checks
+        run: python 03_data_quality.py
+      - name: Publish report to the run summary
+        if: always()
+        run: cat ../data_quality/dq_report.md >> "$GITHUB_STEP_SUMMARY"
+

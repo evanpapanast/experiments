@@ -1,0 +1,51 @@
+nace,label
+C-F,"Manufacturing, electricity, gas, steam and air conditioning supply; water supply and construction"
+C-E,"Manufacturing, electricity, gas, steam and air conditioning; water supply, sewerage, waste management and remediation activities"
+C,Manufacturing
+C10-S951_X_K,"All activities (except agriculture, forestry and fishing, and mining and quarrying), without financial sector"
+C10-C18,"Manufacture of products based on: food, beverages, tobacco, textile, leather, wood, pulp and paper; publishing and printing"
+C10-C12,Manufacture of food products; beverages and tobacco products
+C13-C15,"Manufacture of textiles, wearing apparel, leather and related products"
+C16-C18,"Manufacture of wood, paper, printing and reproduction"
+C19-C23,"Manufacture of coke, refined petroleum, chemical and basic pharmaceutical products, rubber and plastics, other non-metallic mineral products"
+C19,Manufacture of coke and refined petroleum products
+C20,Manufacture of chemicals and chemical products
+C21,Manufacture of basic pharmaceutical products and pharmaceutical preparations
+C22_C23,Manufacture of rubber and plastic products and other non-metallic mineral products
+C24_C25,"Manufacture of basic metals and fabricated metal products, except machinery and equipment"
+C26-C33,"Manufacture of computers, electric and optical products, electrical equipment, machinery and equipment n.e.c, motor vehicles, other transport equipment, furniture, other manufacturing, repair and installation of machinery and equipment"
+C26,"Manufacture of computer, electronic and optical products"
+C27_C28,"Manufacture of electrical equipment, machinery and equipment n.e.c."
+C27,Manufacture of electrical equipment
+C28,Manufacture of machinery and equipment n.e.c.
+C29_C30,"Manufacture of motor vehicles, trailers, semi-trailers and of other transport equipment"
+C31-C33,"Manufacture of furniture; jewellery, musical instruments, toys; repair and installation of machinery and equipment"
+D_E,"Electricity, gas, steam and air conditioning supply; water supply; sewerage, waste management and remediation activities"
+D,"Electricity, gas, steam and air conditioning supply"
+D35,"Electricity, gas, steam and air conditioning supply"
+E,"Water supply; sewerage, waste management and remediation activities"
+F,Construction
+G,Wholesale and retail trade; repair of motor vehicles and motorcycles
+G45-S951_X_K,"Services, without financial sector"
+G45,Wholesale and retail trade and repair of motor vehicles and motorcycles
+G46,"Wholesale trade, except of motor vehicles and motorcycles"
+G47,"Retail trade, except of motor vehicles and motorcycles"
+H,Transportation and storage
+I,Accommodation and food service activities
+I55,Accommodation
+J,Information and communication
+J58-J60,"Publishing, motion picture, video, television programme production; sound recording, programming and broadcasting activities"
+J61,Telecommunications
+J62_J63,"Computer programming, consultancy, and information service activities"
+L_M,"Real estate activities; professional, scientific and technical activities"
+L,Real estate activities
+L68,Real estate activities
+M,"Professional, scientific and technical activities"
+M69-M71,Legal and accounting activities; activities of head offices; management consultancy activities; architectural and engineering activities; technical testing and analysis
+M72,Scientific research and development
+M73-M75,"Advertising and market research; other professional, scientific and technical activities; veterinary activities"
+N77-N82_X_N79,"Activities for rental and leasing, employment, security and investigation, services to buildings and landscape, office administrative, office support and other business support"
+N,Administrative and support service activities
+N79,"Travel agency, tour operator and other reservation service and related activities"
+S951,Repair of computers and communication equipment
+ICT,Information and Communication Technology - total
