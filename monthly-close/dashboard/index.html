@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automated monthly close (Iowa spirits) | Evangelos Papanastasis</title>
+<meta name="description" content="Concept: an automated, governed monthly close on public data with BigQuery, calculation checks and human approval.">
+<style>
+.viz-root{color-scheme:light;--page:#f4f6fa;--surface-1:#fff;--border:rgba(11,11,11,.08);--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#898781;--grid:#e7e6e1;--axis:#c3c2b7;--blue:#2a78d6;--orange:#eb6834;--aqua:#1baf7a;--yellow:#eda100;--red:#e34948;--violet:#6250d6;--up:#0ca30c;--down:#d03b3b;--wash-blue:rgba(42,120,214,.10);--wash-aqua:rgba(27,175,122,.12);--wash-red:rgba(227,73,72,.10);--wash-yellow:rgba(237,161,0,.14);--wash-violet:rgba(98,80,214,.10)}
+@media (prefers-color-scheme:dark){.viz-root{color-scheme:dark;--page:#0d0d0d;--surface-1:#1a1a19;--border:rgba(255,255,255,.10);--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--grid:#2c2c2a;--axis:#383835;--blue:#3987e5;--orange:#d95926;--aqua:#199e70;--yellow:#c98500;--red:#e66767;--violet:#9085e9;--down:#e66767;--wash-blue:rgba(57,135,229,.16);--wash-aqua:rgba(25,158,112,.18);--wash-red:rgba(230,103,103,.16);--wash-yellow:rgba(201,133,0,.18);--wash-violet:rgba(144,133,233,.16)}}
+*{box-sizing:border-box}body{margin:0}
+.viz-root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--page);color:var(--text-primary);min-height:100vh;line-height:1.45}
+.wrap{max-width:1160px;margin:0 auto;padding:28px 20px 48px}
+h1{font-size:27px;margin:0 0 4px;letter-spacing:-.01em}
+header p{margin:0;color:var(--text-secondary);font-size:15px}
+.meta{font-size:12.5px;color:var(--text-muted);margin-top:6px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr);margin-top:18px}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:14px;padding:18px 20px;min-width:0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.s12{grid-column:span 12}.s7{grid-column:span 7}.s5{grid-column:span 5}.s6{grid-column:span 6}.s3{grid-column:span 3}
+@media (max-width:880px){.s7,.s5,.s6{grid-column:span 12}.s3{grid-column:span 6}}
+.card h2{font-size:16px;margin:0;font-weight:650}.sub{font-size:13px;color:var(--text-secondary);margin:3px 0 10px}
+.tile{border-top:4px solid var(--c)}.tile .label{font-size:13px;color:var(--text-secondary)}
+.tile .value{font-size:28px;font-weight:700;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.tile .delta{font-size:13px;color:var(--text-secondary)}
+.pill{display:inline-block;font-weight:700;font-size:12.5px;border-radius:999px;padding:1px 8px}
+.pill.up{color:var(--up);background:rgba(12,163,12,.12)}.pill.down{color:var(--down);background:rgba(208,59,59,.12)}
+.steps{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+@media (max-width:880px){.steps{grid-template-columns:1fr 1fr}}
+.step{border-radius:10px;padding:10px 12px;background:var(--w);border-left:4px solid var(--c);font-size:12.5px;color:var(--text-secondary)}
+.step b{display:block;color:var(--text-primary);font-size:13.5px;margin-bottom:2px}
+.list{margin:0;padding-left:20px;font-size:14.5px}.list li{margin:8px 0}
+.actions{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.action{border-radius:12px;padding:12px 14px;background:var(--w);border-left:5px solid var(--c);font-size:14px;color:var(--text-secondary)}
+.action b{display:block;color:var(--text-primary);margin-bottom:3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+th{color:var(--text-muted);font-weight:600;font-size:12px}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.st{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.PASS{color:var(--up);background:rgba(12,163,12,.12)}.WARN{color:#a86f00;background:var(--wash-yellow)}.INFO{color:var(--blue);background:var(--wash-blue)}
+svg text{font-family:inherit}.ax{fill:var(--text-muted);font-size:11px}.lb{fill:var(--text-primary);font-size:12px}.lbb{fill:var(--text-primary);font-size:12px;font-weight:650}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--text-secondary);margin-bottom:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+footer{font-size:12px;color:var(--text-muted);margin-top:22px}footer a{color:inherit}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px}.FAIL{color:var(--down);background:var(--wash-red)}
+h3{font-size:13px;margin:14px 0 6px;color:var(--text-secondary)}
+</style>
+</head>
+<body><div class="viz-root"><div class="wrap">
+<header>
+<h1 id="title">Automated monthly close</h1>
+<p>Iowa spirits market. Produced by a scripted pipeline from BigQuery public data, checked, then approved by a person before publishing.</p>
+<div class="meta" id="meta"></div>
+</header>
+<div class="grid">
+<section class="card s12"><h2>What the pipeline did</h2><p class="sub">Seven steps. Every number below comes from one generated data file, and a run with any failed check publishes nothing.</p><div class="steps" id="steps"></div></section>
+<div id="tiles" style="display:contents"></div>
+<section class="card s7"><h2>Management summary</h2><p class="sub">Each sentence is produced by a written rule from the numbers (see README).</p><ul class="list" id="summary"></ul></section>
+<section class="card s5"><h2>Recommended actions</h2><p class="sub">For the next planning meeting.</p><div class="actions" id="actions"></div></section>
+<section class="card s6"><h2>Why the month missed budget</h2><p class="sub">From budget to actual, in $ millions. The axis does not start at zero so the steps are visible.</p><div id="bridge"></div></section>
+<section class="card s6"><h2>Full-year landing</h2><p class="sub">Year to date plus the rest of the year, in $ millions.</p><div id="landing"></div>
+<p class="sub" style="margin-top:8px"><b>Trend view</b> assumes the year-to-date shortfall continues. <b>Model view</b> is BigQuery AI.FORECAST, with its 80% range. The trend view is the base case because the model was too optimistic earlier in the year.</p></section>
+<section class="card s12"><h2>By product family: actual vs budget</h2><p class="sub">Gap to budget in $ millions, split into volume and price. Sorted from the biggest miss.</p>
+<div class="legend"><span><i style="background:var(--red)"></i>Below budget</span><span><i style="background:var(--aqua)"></i>Above budget</span></div><div id="fam"></div></section>
+<section class="card s12"><h2>Back end: checks</h2><p class="sub">Source data checks and calculation checks. A FAIL stops the run; warnings are shown here and in <span class="mono">governance/checks.md</span>.</p>
+<table><thead><tr><th>ID</th><th>Rule</th><th>Result</th><th>Status</th></tr></thead><tbody id="checks"></tbody></table></section>
+<section class="card s12"><h2>Back end: query log</h2><p class="sub">Every BigQuery query that ran, in order. SQL is in <span class="mono">sql/</span>, results saved unchanged in <span class="mono">data/</span>, with SHA-256 fingerprints in <span class="mono">governance/run_log.md</span>. All queries were read-only.</p>
+<table><thead><tr><th>Step</th><th>Purpose</th><th>SQL file</th><th>Result file</th><th class="n">GB billed</th><th class="n">Rows</th></tr></thead><tbody id="queries"></tbody></table></section>
+</div>
+<footer>Source: Iowa Department of Revenue, <i>Iowa Liquor Sales</i>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, read from Google BigQuery public datasets. Changes: grouped into 11 product families and aggregated by month. Budget, forecasts and analysis are my own. No store, supplier or product names are used. Not business advice.<br>Part of <a href="https://evanpapanast.github.io/experiments/">experiments</a> by <a href="https://evanpapanast.github.io/portfolio/">Evangelos Papanastasis</a>.</footer>
+</div></div>
+<script src="data.js"></script>
+<script>
+const C=CLOSE, T=C.tiles;
+const css=v=>getComputedStyle(document.querySelector('.viz-root')).getPropertyValue(v).trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mn=v=>v/1e6, $m=(v,d=1)=>'$'+mn(v).toFixed(d)+'m', sg=(v,d=2)=>(v<0?'−':'+')+'$'+Math.abs(mn(v)).toFixed(d)+'m';
+const pc=(v,d=1)=>(v<0?'−':'+')+Math.abs(v*100).toFixed(d)+'%';
+const monthName=new Date(C.month+'-01T00:00:00').toLocaleString('en-GB',{month:'long',year:'numeric'});
+document.getElementById('title').textContent='Automated monthly close: '+monthName;
+document.getElementById('meta').textContent='Run on '+C.generated+' · all figures in US$ · BigQuery: '+C.gb_billed+' GB billed, inside the free tier';
+const cnt=s=>C.checks.filter(c=>c.status===s).length;
+const steps=[['1 · New data?',C.checks.find(c=>c.id==='N1').result.split('.')[0]+'.','blue'],
+ ['2 · Quality gate',C.checks.filter(c=>c.area==='Source data').length+' source checks: '+C.checks.filter(c=>c.area==='Source data'&&c.status==='PASS').length+' pass, '+cnt('WARN')+' warnings, '+cnt('FAIL')+' failures.','aqua'],
+ ['3 · Actual vs budget',C.families.length+' families, split into volume, mix and price.','aqua'],
+ ['4 · Calculation checks',C.checks.filter(c=>c.area==='Calculation').length+' checks that every figure adds up: all pass.','aqua'],
+ ['5 · Forecast',"Last month's forecast checked; rest of year re-forecast.",'aqua'],
+ ['6 · Commentary','Summary and actions from written rules.','aqua'],
+ ['7 · Human approval','Published only through a reviewed pull request.','yellow']];
+document.getElementById('steps').innerHTML=steps.map(s=>'<div class="step" style="--c:var(--'+s[2]+');--w:var(--wash-'+s[2]+')"><b>'+s[0]+'</b>'+esc(s[1])+'</div>').join('');
+const ytdPct=T.ytd/T.ytd_budget-1;
+const tiles=[['Sales vs budget',$m(T.actual),'<span class="pill '+(T.actual<T.budget?'down':'up')+'">'+pc(T.actual/T.budget-1)+'</span> budget '+$m(T.budget),T.actual<T.budget?'red':'aqua'],
+ ['Vs same month last year',pc(T.actual/T.last_year-1),'last year '+$m(T.last_year),T.actual<T.last_year?'red':'aqua'],
+ ['Year to date vs budget',pc(ytdPct),$m(T.ytd)+' vs '+$m(T.ytd_budget)+' · one month earlier '+pc(T.prior_ytd_pct),'orange'],
+ ['Full year: expected landing',$m(T.landing_trend,0)+'–'+$m(T.landing_model,0).slice(1),'budget '+$m(T.fy_budget)+' · gap '+$m(T.fy_budget-T.landing_model,0)+'–'+$m(T.fy_budget-T.landing_trend,0).slice(1),'violet']];
+document.getElementById('tiles').innerHTML=tiles.map(t=>'<div class="card tile s3" style="--c:var(--'+t[3]+')"><div class="label">'+t[0]+'</div><div class="value">'+t[1]+'</div><div class="delta">'+t[2]+'</div></div>').join('');
+document.getElementById('summary').innerHTML=C.summary.map(s=>'<li><b>'+esc(s[0])+'</b> '+esc(s[1])+'</li>').join('');
+const ac=['violet','aqua','red','blue','orange'];
+document.getElementById('actions').innerHTML=C.actions.map((a,i)=>'<div class="action" style="--c:var(--'+ac[i%5]+');--w:var(--wash-'+(['violet','aqua','red','blue','yellow'][i%5])+')"><b>'+(i+1)+'. '+esc(a[0])+'</b>'+esc(a[1])+'</div>').join('');
+function bridge(){const W=520,H=280,L=40,B=40,Tp=24;const vals=[];let run=0;C.bridge.forEach((b,i)=>{if(i==0||i==C.bridge.length-1){vals.push(b[1]);run=b[1]}else{vals.push(run);run+=b[1];vals.push(run)}});
+const y0=Math.floor(mn(Math.min(...vals))*2-1)/2,y1=Math.ceil(mn(Math.max(...vals))*2+1)/2;const y=v=>Tp+(H-Tp-B)*(1-(v-y0)/(y1-y0));const n=C.bridge.length,bw=(W-L-10)/n;
+let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Bridge from budget to actual">';
+for(let v=y0;v<=y1+1e-9;v+=0.5){s+='<line x1="'+L+'" x2="'+W+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="'+css('--grid')+'"/><text class="ax" x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v.toFixed(1)+'</text>';}
+run=0;C.bridge.forEach((b,i)=>{const x=L+i*bw+bw*.18,w=bw*.64;let top,bot,c,lab,v=mn(b[1]);
+if(i==0||i==n-1){top=v;bot=y0;c=css('--blue');lab='$'+v.toFixed(2)+'m';run=v}else{const a=run,z=run+v;top=Math.max(a,z);bot=Math.min(a,z);c=v<0?css('--red'):css('--aqua');lab=sg(b[1]);run=z}
+s+='<rect x="'+x+'" y="'+y(top)+'" width="'+w+'" height="'+Math.max(2,y(bot)-y(top))+'" rx="3" fill="'+c+'"/><text class="lbb" x="'+(x+w/2)+'" y="'+(y(top)-6)+'" text-anchor="middle">'+lab+'</text><text class="lb" x="'+(x+w/2)+'" y="'+(H-B+18)+'" text-anchor="middle">'+b[0]+'</text>';});
+document.getElementById('bridge').innerHTML=s+'</svg>';}
+function landing(){const W=520,H=190,L=110,R=20;const lo=Math.floor(mn(T.landing_lo)/20)*20,hi=Math.ceil(mn(T.landing_hi)/20)*20;const x=v=>L+(W-L-R)*(mn(v)-lo)/(hi-lo);
+const rows=[['Budget',T.fy_budget,css('--axis')],['Trend view',T.landing_trend,css('--violet')],['Model view',T.landing_model,css('--blue')]];
+let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Full-year landing vs budget">';
+for(let v=lo;v<=hi;v+=20){s+='<line x1="'+x(v*1e6)+'" x2="'+x(v*1e6)+'" y1="10" y2="'+(H-30)+'" stroke="'+css('--grid')+'"/><text class="ax" x="'+x(v*1e6)+'" y="'+(H-12)+'" text-anchor="middle">'+v+'</text>';}
+rows.forEach((r,i)=>{const yy=18+i*48;s+='<text class="lb" x="'+(L-10)+'" y="'+(yy+18)+'" text-anchor="end">'+r[0]+'</text><rect x="'+L+'" y="'+yy+'" width="'+(x(r[1])-L)+'" height="26" rx="4" fill="'+r[2]+'"/>';
+s+='<text class="lbb" x="'+((i==2?x(T.landing_hi):x(r[1]))+6)+'" y="'+(yy+18)+'">'+$m(r[1])+'</text>';
+if(i==2){const k=css('--text-primary');s+='<line x1="'+x(T.landing_lo)+'" x2="'+x(T.landing_hi)+'" y1="'+(yy+13)+'" y2="'+(yy+13)+'" stroke="'+k+'" stroke-width="1.5"/><line x1="'+x(T.landing_lo)+'" x2="'+x(T.landing_lo)+'" y1="'+(yy+5)+'" y2="'+(yy+21)+'" stroke="'+k+'"/><line x1="'+x(T.landing_hi)+'" x2="'+x(T.landing_hi)+'" y1="'+(yy+5)+'" y2="'+(yy+21)+'" stroke="'+k+'"/><text class="ax" x="'+x(T.landing_lo)+'" y="'+(yy+38)+'" text-anchor="middle">'+mn(T.landing_lo).toFixed(0)+'</text><text class="ax" x="'+x(T.landing_hi)+'" y="'+(yy+38)+'" text-anchor="middle">'+mn(T.landing_hi).toFixed(0)+'</text>';}});
+document.getElementById('landing').innerHTML=s+'</svg><div class="ax" style="font-size:11.5px;color:var(--text-muted)">Axis starts at $'+lo+'m. Whisker: model range (80% confidence).</div>';}
+function fam(){const F=C.families,W=1100,rh=30,H=F.length*rh+30,L=180,M=600;const mx=Math.max(...F.map(r=>Math.abs(mn(r.variance))))*1.7;const x=v=>L+(M-L)/2+(M-L)/2*mn(v)/mx;
+let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Variance by product family">';
+[['Volume',20],['Price',110],['vs budget',190],['vs last year',280],['YTD vs budget',380]].forEach(h=>s+='<text class="ax" x="'+(M+h[1])+'" y="12">'+h[0]+'</text>');
+s+='<line x1="'+x(0)+'" x2="'+x(0)+'" y1="18" y2="'+H+'" stroke="'+css('--axis')+'"/>';
+F.forEach((r,i)=>{const yy=22+i*rh,neg=r.variance<0;s+='<text class="lb" x="'+(L-10)+'" y="'+(yy+16)+'" text-anchor="end">'+esc(r.family)+'</text>';
+s+='<rect x="'+Math.min(x(0),x(r.variance))+'" y="'+(yy+4)+'" width="'+Math.abs(x(r.variance)-x(0))+'" height="18" rx="3" fill="'+(neg?css('--red'):css('--aqua'))+'"/>';
+s+='<text class="lbb" x="'+(neg?x(r.variance)-6:x(r.variance)+6)+'" y="'+(yy+17)+'" text-anchor="'+(neg?'end':'start')+'">'+sg(r.variance)+'</text>';
+const col=(t,xx)=>'<text class="lb" x="'+(M+xx)+'" y="'+(yy+17)+'" style="font-variant-numeric:tabular-nums">'+t+'</text>';
+s+=col(sg(r.volume_effect),20)+col(sg(r.price_effect),110)+col(pc(r.variance_pct),190)+col(pc(r.yoy_pct),280)+col(sg(r.ytd_variance),380);});
+document.getElementById('fam').innerHTML=s+'</svg>';}
+document.getElementById('checks').innerHTML=C.checks.map(c=>'<tr><td class="mono">'+c.id+'</td><td>'+esc(c.rule)+'</td><td>'+esc(c.result)+'</td><td><span class="st '+c.status+'">'+c.status+'</span></td></tr>').join('');
+document.getElementById('queries').innerHTML=C.queries.map(q=>'<tr><td>'+esc(q.step)+'</td><td>'+esc(q.purpose)+'</td><td class="mono">'+esc(q.sql_file||'–')+'</td><td class="mono">'+esc(q.output_file||'–')+'</td><td class="n">'+q.gb.toFixed(2)+'</td><td class="n">'+q.rows_returned+'</td></tr>').join('')+'<tr><td></td><td><b>Total</b></td><td></td><td></td><td class="n"><b>'+C.gb_billed.toFixed(2)+'</b></td><td></td></tr>';
+bridge();landing();fam();
+</script>
+</body></html>

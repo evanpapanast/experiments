@@ -11,6 +11,7 @@ reports as code) on a question I find interesting.
 | [AI adoption in EU enterprises](ai-adoption-eu/) | Who uses AI in Europe, for what, and what holds the rest back? | Eurostat `isoc_eb_ai`, `isoc_eb_ain2` | Python, BigQuery, SQL, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/ai-adoption-eu/dashboard/) |
 | [What the ECB says, and what it does](ecb-speeches/) | Do ECB speeches predict interest rate decisions, and what is the ECB talking about now? | ECB speeches dataset, ECB statistics (interest rates) | Python, text analysis, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/ecb-speeches/dashboard/) |
 | [Iowa spirits market: price, volume, forecast and budget](liquor-market/) | Is growth coming from price or volume, how good was the budget, and what should we plan for next year? | Iowa Liquor Sales (CC BY 4.0) via BigQuery public datasets | BigQuery, SQL, AI.FORECAST, Python, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/liquor-market/dashboard/) |
+| [Automated monthly close (concept)](monthly-close/) | Can a governed month-end close run by itself, with checks a person can audit? | Iowa Liquor Sales (CC BY 4.0) via BigQuery public datasets | BigQuery, SQL, AI.FORECAST, Python, GitHub Actions, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/monthly-close/dashboard/) |
 
 ## Conventions
 

@@ -1,0 +1,11 @@
+step,purpose,sql_file,output_file,bytes_billed,rows_returned,run_on
+0,Size check before running (dry run),01_new_data_check.sql,,0,0,2026-11-13
+1,New data check,01_new_data_check.sql,source_months.csv,816840704,2,2026-11-13
+0,Size check before running (dry run),02_source_quality_checks.sql,,0,0,2026-11-13
+2,Source quality checks,02_source_quality_checks.sql,source_checks.csv,2844786688,2,2026-11-13
+2,Follow-up on price per litre warning,02_source_quality_checks.sql,price_outliers.csv,1089470464,2,2026-11-13
+3,Actuals by family,03_actuals_by_family.sql,actuals_by_family.csv,20971520,11,2026-11-13
+3,Budget by family,04_budget_by_family.sql,budget_by_family.csv,10485760,11,2026-11-13
+4,Forecast check (data to March),05_forecasts.sql,forecast_check.csv,10485760,1,2026-11-13
+5,Re-forecast May-Dec (data to April),05_forecasts.sql,reforecast.csv,10485760,8,2026-11-13
+-,Exploration: table columns and budget table preview (not used in results),,,20971520,15,2026-11-13
