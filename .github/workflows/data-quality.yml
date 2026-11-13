@@ -59,3 +59,22 @@ jobs:
         if: always()
         run: cat ../data_quality/dq_report.md >> "$GITHUB_STEP_SUMMARY"
 
+
+  monthly-close:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: monthly-close/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rerun the close and all checks (fails on any FAIL check)
+        run: python close.py
+      - name: Fail if report data or governance files differ from what the script produces
+        run: |
+          git diff --exit-code -- ../dashboard/data.js ../governance/ ../data/close_by_family.csv
+      - name: Publish checks to the run summary
+        if: always()
+        run: cat ../governance/checks.md >> "$GITHUB_STEP_SUMMARY"
