@@ -33,13 +33,13 @@ city, state, latitude/longitude, exact age, and for web visits the IP address, b
 
 ```
 bigquery-public-data.thelook_ecommerce.{users, events, orders, order_items, inventory_items, products}
-  → customer_360.stg_customers     (89,819 adult customers, 6 allowed columns)
-  → customer_360.stg_sessions      (226,241 visits in window, no IP / browser / place / page)
-  → customer_360.stg_order_items   (97,855 order lines with product cost and purchase channel)
-  → customer_360.customer_metrics  (internal: one row per customer ID → group and preferred channel)
-  → customer_360.rpt_*             (group-level tables, small cells suppressed)
-  → customer_360.qa_checks         (15 checks)
-  → sql/05_extract.sql → data/bigquery_extract.json (SHA-256 in data/manifest.json)
+  → dbt: customer_360_dbt.stg_customers      (89,819 adult customers, 6 allowed columns)
+  → dbt: customer_360_dbt.stg_sessions       (226,241 visits in window, no IP / browser / place / page)
+  → dbt: customer_360_dbt.stg_order_items    (97,855 order lines with product cost and purchase channel)
+  → dbt: customer_360_dbt.int_customer_metrics (internal: one row per customer ID → group and preferred channel)
+  → dbt: customer_360_dbt.rpt_*              (group-level tables, small cells suppressed)
+  → dbt test                                 (43 tests)
+  → sql/extract_for_report.sql → data/bigquery_extract.json (SHA-256 in data/manifest.json)
   → scripts/01_build_report_data.py → data/*.csv, dashboard/data.js
   → scripts/02_data_quality.py → data_quality/dq_report.md (GitHub Actions on every change)
 ```
@@ -47,11 +47,24 @@ bigquery-public-data.thelook_ecommerce.{users, events, orders, order_items, inve
 ## 4. Method choices to know
 
 - **Purchase channel:** the channel of the customer's purchase visit closest in time to the order, within 24 hours. All orders matched.
-- **Preferred channel:** the channel of most of a customer's visits in the window (ties: most recent).
+- **Preferred channel:** the channel of most of a customer's visits in the window; ties go to the most recent visit, then channel name, so every run gives the same answer.
 - **Net revenue** excludes cancelled and returned items; items still processing or shipped count as sold.
 - **Currency:** the source does not state one; amounts are shown in $.
 - **Partial months:** Nov 2024 (from the 20th) and Nov 2026 (to the 19th).
 
-## 5. Change control
+## 5. Cost control
+
+BigQuery's free tier is 1 TiB of queries and 10 GiB of storage per month. Every dbt query is capped at 1 GB billed
+(`maximum_bytes_billed`), heavy models are dry-run first, public tables are read once per build, tests run as one query,
+and CI never queries BigQuery. Every run is recorded in `data_quality/cost_log.md`.
+
+## 6. Change log
+
+| Date | Change |
+|---|---|
+| 2026-11-20 | First version in hand-written SQL, 15 checks. |
+| 2026-11-20 | Rebuilt as a dbt project with 43 tests. Fixed an arbitrary tie-break in "preferred channel" (6,388 of 49,130 visiting customers had a tie); 7 of 9 report tables unchanged; in the 2 preferred-channel tables, channel totals moved by at most 80 buyers and small cells by a few customers (e.g. Champions preferring YouTube 104 → 112). Old dataset `customer_360` kept for comparison. |
+
+## 7. Change control
 
 Every change goes through a branch and a pull request reviewed by the owner. The data-quality workflow must pass before merging.

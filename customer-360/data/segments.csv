@@ -1,8 +1,8 @@
 segment,definition,action,customers,customer_share,net_revenue,revenue_share,gross_margin,orders,aov,revenue_per_customer,return_rate,net_revenue_12m,visiting_customers
-Champions,"3+ orders, last order within 6 months","Keep them: early access, loyalty perks. Do not discount.",2103,0.0234,529723,0.121,275476,7008,75.59,251.89,0.1105,432962,2074
+Champions,"3+ orders, last order within 6 months","Keep them: early access, loyalty perks. Do not discount.",2103,0.0234,529723,0.121,275476,7008,75.59,251.89,0.1105,432962,2075
 Loyal,"2 orders, last order within 6 months",Turn into Champions: third-order offer in their favourite category.,4916,0.0547,742335,0.1696,385382,9832,75.5,151.0,0.1142,634414,4916
 New,First order in the last 90 days,Get the second order within 60 days: welcome series by email.,7739,0.0862,566308,0.1293,294355,7739,73.18,73.18,0.1199,566308,7739
 At risk,"2+ orders, but silent for 6+ months",Win back now: personal email with new arrivals in categories they bought.,3826,0.0426,647702,0.1479,336428,8451,76.64,169.29,0.1145,271103,3826
 One-time buyers,"1 order, more than 90 days ago","Biggest pool: a second-order campaign, mainly by email and Google Ads.",24827,0.2764,1892093,0.4322,983002,24827,76.21,76.21,0.1222,981498,24827
-Lapsed,"Bought before Nov 2024, nothing since",Low-cost reactivation only; most no longer visit.,21266,0.2368,0,0.0,0,0,,0.0,,0,1068
+Lapsed,"Bought before Nov 2024, nothing since",Low-cost reactivation only; most no longer visit.,21266,0.2368,0,0.0,0,0,,0.0,,0,1065
 Never bought,"Registered, never bought",Target the ones who still visit; leave the rest.,25142,0.2799,0,0.0,0,0,,0.0,,0,4605

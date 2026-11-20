@@ -1,38 +1,38 @@
 segment,preferred_channel,customers,net_revenue
-At risk,YouTube,288,47071
-At risk,Google Ads,1143,196055
-At risk,Facebook,262,40103
-At risk,Email,1994,343788
-At risk,Organic,139,20685
-Champions,YouTube,104,22309
-Champions,Facebook,108,27052
+At risk,Email,1983,340937
+At risk,Facebook,272,41802
+At risk,Google Ads,1149,198935
+At risk,Organic,136,19407
+At risk,YouTube,286,46621
+Champions,Email,1238,318404
+Champions,Facebook,104,25743
+Champions,Google Ads,621,153691
 Champions,Organic,,
-Champions,Google Ads,618,153162
-Champions,Email,1244,320212
-Lapsed,Email,504,0
-Lapsed,Google Ads,340,0
-Lapsed,YouTube,114,0
-Lapsed,Organic,,
-Lapsed,Facebook,110,0
+Champions,YouTube,112,25465
+Lapsed,Email,498,0
+Lapsed,Facebook,109,0
+Lapsed,Google Ads,342,0
 Lapsed,No visits,20152,0
-Loyal,Facebook,397,50858
-Loyal,Google Ads,1431,220357
-Loyal,YouTube,402,53954
-Loyal,Organic,181,22874
-Loyal,Email,2505,394292
-Never bought,Organic,234,0
-Never bought,YouTube,423,0
-Never bought,Google Ads,1364,0
+Lapsed,Organic,,
+Lapsed,YouTube,116,0
+Loyal,Email,2485,390692
+Loyal,Facebook,397,51741
+Loyal,Google Ads,1447,223567
+Loyal,Organic,184,23475
+Loyal,YouTube,403,52860
+Never bought,Email,2148,0
+Never bought,Facebook,441,0
+Never bought,Google Ads,1386,0
 Never bought,No visits,20537,0
-Never bought,Email,2139,0
-Never bought,Facebook,445,0
-New,Google Ads,2346,162983
-New,Organic,355,23658
-New,Facebook,766,54917
-New,Email,3530,273747
-New,YouTube,742,51002
-One-time buyers,YouTube,2342,161875
-One-time buyers,Facebook,2350,172884
-One-time buyers,Organic,1147,85226
-One-time buyers,Google Ads,7425,567607
-One-time buyers,Email,11563,904500
+Never bought,Organic,229,0
+Never bought,YouTube,401,0
+New,Email,3531,271080
+New,Facebook,760,53271
+New,Google Ads,2350,166216
+New,Organic,357,24357
+New,YouTube,741,51383
+One-time buyers,Email,11519,893106
+One-time buyers,Facebook,2347,172573
+One-time buyers,Google Ads,7436,572828
+One-time buyers,Organic,1144,85272
+One-time buyers,YouTube,2381,168313

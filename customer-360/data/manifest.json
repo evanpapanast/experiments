@@ -1,6 +1,6 @@
 {
   "source_extract": "bigquery_extract.json",
-  "sha256": "2f564543368ef8a559a064ad647fce59b7342446dbdd947f8e400254bd4261be",
+  "sha256": "2885481837d7b9e5be00d0573ad1824bfdded25627f4fdf4cf5b5e083c95655a",
   "window": "20 Nov 2024 - 19 Nov 2026",
   "snapshot": "2026-11-19",
   "built": "2026-11-20",

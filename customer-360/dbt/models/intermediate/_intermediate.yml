@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: int_customer_metrics
+    description: "Internal: one row per customer ID with totals, preferred channel and customer group. Never published."
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: segment
+        description: "Champions, Loyal, New, At risk, One-time buyers, Lapsed, Never bought (see DATA_DICTIONARY.md)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: ['Champions', 'Loyal', 'New', 'At risk', 'One-time buyers', 'Lapsed', 'Never bought']}
+      - name: preferred_channel
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['Email', 'Google Ads', 'Facebook', 'YouTube', 'Organic', 'No visits']}

@@ -3,7 +3,7 @@
 **[Open the interactive report →](https://evanpapanast.github.io/experiments/customer-360/dashboard/)**
 
 A management report for an online fashion shop, built the way a commercial analytics team would:
-**business question → free, legal data → GDPR-minimised model → checked insights.** Built in Google BigQuery.
+**business question → free, legal data → GDPR-minimised model → checked insights.** Modelled in **dbt** on Google BigQuery.
 
 > **Synthetic data.** TheLook is a fictional shop created by Google's Looker team. The figures show the method and the
 > decisions, not a real market.
@@ -38,21 +38,20 @@ first thing to add with real data.
 
 ```
 bigquery-public-data.thelook_ecommerce (synthetic)
-   └─► sql/01  GDPR-minimised staging: allowed columns only, adults only, 24-month window
-   └─► sql/02  one internal row per customer ID → customer group and preferred channel (never published)
-   └─► sql/03  group-level report tables; cells under 50 customers suppressed
-   └─► sql/04  15 quality and privacy checks inside BigQuery
-   └─► sql/05  compact extract ──► scripts/01  report data and plain-language insights ──► dashboard/
-                                  scripts/02  26 checks on the published files (GitHub Actions)
+   └─► dbt staging        GDPR-minimised: allowed columns only, adults only, 24-month window
+   └─► dbt intermediate   one internal row per customer ID → customer group and preferred channel (never published)
+   └─► dbt marts          9 group-level report tables; cells under 50 customers suppressed
+   └─► dbt tests          43 quality, privacy and reproducibility tests inside BigQuery (1 GB per-query cost cap)
+   └─► extract ──► scripts/01  report data and plain-language insights ──► dashboard/
+                   scripts/02  26 checks on the published files (GitHub Actions, with dbt parse and compile)
 ```
 
 | Step | File |
 |---|---|
-| Minimised staging tables | `sql/01_staging.sql` |
-| Customer groups (internal) | `sql/02_customer_groups.sql` |
-| Report tables | `sql/03_report_tables.sql` |
-| Quality checks in BigQuery | `sql/04_quality_checks.sql` |
-| Extract for the report | `sql/05_extract.sql` → `data/bigquery_extract.json` |
+| dbt project: models, macros, tests, cost cap | [`dbt/`](dbt/README.md) |
+| Run plan for the BigQuery connector | `scripts/03_dbt_connector_plan.py` |
+| Extract for the report | `sql/extract_for_report.sql` → `data/bigquery_extract.json` |
+| BigQuery cost of every run | `data_quality/cost_log.md` |
 | Report data, insights and actions | `scripts/01_build_report_data.py` → `data/*.csv`, `dashboard/data.js` |
 | Quality gate on published files | `scripts/02_data_quality.py` → `data_quality/dq_report.md` |
 
@@ -62,7 +61,9 @@ Rerun the published part: `cd scripts && python 01_build_report_data.py && pytho
 
 - **Reconciled:** 97,855 order lines and $4,378,159 of net revenue match the source exactly; segment, channel, category and
   monthly views agree with each other.
-- **Checked twice:** 15 checks in BigQuery and 26 on the published files; the second set runs on every change.
+- **Checked twice:** 43 dbt tests in BigQuery and 26 checks on the published files; the second set runs on every change.
+- **Reproducible:** the dbt rebuild found and fixed an arbitrary tie-break in "preferred channel"; 7 of 9 report tables are identical to the first version; in the other two, channel totals moved by at most 80 buyers (Email-preferred buyers 20,836 → 20,756).
+- **Inside the free tier:** a full build and test run bills about 0.55 GB of the 1 TiB free each month; every query is capped at 1 GB.
 - **GDPR by design:** only customer ID, age band, gender, region, first channel and sign-up month were copied; no names, e-mail,
   address, postal code, city, GPS, exact age, IP address or browser. Under-18s excluded. Only group totals of 50+ customers are published.
 - See [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md) and [DATA_DICTIONARY.md](DATA_DICTIONARY.md).

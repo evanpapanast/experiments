@@ -1,0 +1,41 @@
+# Customer 360 (TheLook) rebuilt as a dbt project on Google BigQuery.
+# Same logic and results as the hand-written SQL version; see README.md in this folder.
+name: customer_360
+version: "1.0.0"
+config-version: 2
+profile: customer_360
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  window_start: "2024-11-20"        # first day of the 24-month window
+  window_end_exclusive: "2026-11-20" # day after the snapshot
+  snapshot_date: "2026-11-19"       # source grows daily; analysis frozen here
+  last_12m_after: "2025-11-19"      # orders after this date count as "last 12 months"
+  min_age: 18                       # GDPR Art. 8: no children's data
+  min_group_size: 50                # smallest group that may be published
+
+models:
+  customer_360:
+    +materialized: table            # small tables; avoids re-scanning public data on every read
+    +labels:
+      project: customer-360
+      tool: dbt
+    staging:
+      +description: "GDPR-minimised copies of the public source, 24-month window, adults only."
+    intermediate:
+      +description: "Internal per-customer-ID tables. Never published."
+    marts:
+      +description: "Group-level reporting tables. Only these feed the report."
+
+tests:
+  customer_360:
+    +store_failures: false
+
+query-comment:
+  comment: "dbt customer_360 {{ node.unique_id if node is not none else '' }}"
+  job-label: true

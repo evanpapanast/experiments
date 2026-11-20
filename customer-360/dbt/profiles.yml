@@ -1,0 +1,28 @@
+# No secrets here: authentication uses your own Google login (gcloud auth application-default login).
+customer_360:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: project-57338774-2b06-4ac1-ba9
+      dataset: customer_360_dbt
+      location: US
+      threads: 2
+      priority: interactive
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      # Cost guard: any single query that would bill more than 1 GB fails instead of running.
+      # The whole build bills well under 1 GB; the free tier is 1 TiB of queries per month.
+      maximum_bytes_billed: 1000000000
+    offline:
+      # Compile-only target: a throw-away key with no access, so dbt can render SQL without any warehouse call.
+      # Used by CI and by the connector runner (scripts/03_dbt_connector_run.py). It cannot run queries.
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('DBT_OFFLINE_KEYFILE', '/tmp/offline_sa.json') }}"
+      project: project-57338774-2b06-4ac1-ba9
+      dataset: customer_360_dbt
+      location: US
+      threads: 1
+      maximum_bytes_billed: 1000000000
