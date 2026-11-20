@@ -12,6 +12,7 @@ reports as code) on a question I find interesting.
 | [What the ECB says, and what it does](ecb-speeches/) | Do ECB speeches predict interest rate decisions, and what is the ECB talking about now? | ECB speeches dataset, ECB statistics (interest rates) | Python, text analysis, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/ecb-speeches/dashboard/) |
 | [Iowa spirits market: price, volume, forecast and budget](liquor-market/) | Is growth coming from price or volume, how good was the budget, and what should we plan for next year? | Iowa Liquor Sales (CC BY 4.0) via BigQuery public datasets | BigQuery, SQL, AI.FORECAST, Python, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/liquor-market/dashboard/) |
 | [Automated monthly close (concept)](monthly-close/) | Can a governed month-end close run by itself, with checks a person can audit? | Iowa Liquor Sales (CC BY 4.0) via BigQuery public datasets | BigQuery, SQL, AI.FORECAST, Python, GitHub Actions, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/monthly-close/dashboard/) |
+| [Customer 360: customers and channels](customer-360/) | Which customer groups and channels create the most profitable revenue, and where should marketing go next? | TheLook eCommerce (synthetic, Google) via BigQuery public datasets | BigQuery, SQL, Python, GitHub Actions, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/customer-360/dashboard/) |
 
 ## Conventions
 
@@ -35,6 +36,7 @@ Cost: all work runs on BigQuery's free tier; nothing here requires a paid accoun
   - EU data © European Union, reused under Commission Decision 2011/833/EU with the source acknowledged.
   - ECB speeches and statistics, reused under the ECB copyright terms and the ESCB statistics reuse policy; no speech text is reproduced.
   - Iowa Liquor Sales © State of Iowa (Iowa Department of Revenue), reused under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) with the source credited.
+  - TheLook eCommerce: a fully synthetic dataset from Google (Looker team) in the BigQuery public datasets, offered for testing and evaluation; only derived group totals are published. Even though it describes no real people, the same GDPR rules are applied as if it did.
 - These are independent analyses, not endorsed by any of the publishers.
 
 ---

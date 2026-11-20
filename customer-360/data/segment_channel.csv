@@ -1,0 +1,38 @@
+segment,preferred_channel,customers,net_revenue
+At risk,YouTube,288,47071
+At risk,Google Ads,1143,196055
+At risk,Facebook,262,40103
+At risk,Email,1994,343788
+At risk,Organic,139,20685
+Champions,YouTube,104,22309
+Champions,Facebook,108,27052
+Champions,Organic,,
+Champions,Google Ads,618,153162
+Champions,Email,1244,320212
+Lapsed,Email,504,0
+Lapsed,Google Ads,340,0
+Lapsed,YouTube,114,0
+Lapsed,Organic,,
+Lapsed,Facebook,110,0
+Lapsed,No visits,20152,0
+Loyal,Facebook,397,50858
+Loyal,Google Ads,1431,220357
+Loyal,YouTube,402,53954
+Loyal,Organic,181,22874
+Loyal,Email,2505,394292
+Never bought,Organic,234,0
+Never bought,YouTube,423,0
+Never bought,Google Ads,1364,0
+Never bought,No visits,20537,0
+Never bought,Email,2139,0
+Never bought,Facebook,445,0
+New,Google Ads,2346,162983
+New,Organic,355,23658
+New,Facebook,766,54917
+New,Email,3530,273747
+New,YouTube,742,51002
+One-time buyers,YouTube,2342,161875
+One-time buyers,Facebook,2350,172884
+One-time buyers,Organic,1147,85226
+One-time buyers,Google Ads,7425,567607
+One-time buyers,Email,11563,904500

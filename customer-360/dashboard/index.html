@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer 360: which customers and channels drive profitable revenue | Evangelos Papanastasis</title>
+<meta name="description" content="Customer 360 management report on TheLook synthetic e-commerce data: customer groups, preferred channels, revenue and cost by channel, and where to grow. Built with BigQuery, GDPR-minimised.">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #eef0f4; --tile: #ffffff; --ribbon: #1f2430; --ribbon-ink: #f4f5f7; --border: rgba(11,11,11,0.09);
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #7a7973; --grid: #e7e6e1; --axis: #c3c2b7; --accent: #2a78d6;
+    --c-email: #2a78d6; --c-gads: #eb6834; --c-fb: #1baf7a; --c-yt: #eda100; --c-org: #e87ba4; --c-none: #b4b2a9;
+    --good: #0c8a0c; --bad: #d03b3b; --wash: rgba(42,120,214,0.09); --sel: #fdf3d8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --page: #0f1012; --tile: #1a1b1e; --ribbon: #0a0b0d; --ribbon-ink: #f0efec; --border: rgba(255,255,255,0.10);
+      --ink: #f0efec; --ink-2: #c3c2b7; --muted: #8f8e88; --grid: #2c2c2a; --axis: #45453f; --accent: #3987e5;
+      --c-email: #3987e5; --c-gads: #d95926; --c-fb: #199e70; --c-yt: #c98500; --c-org: #d55181; --c-none: #5f5e5a;
+      --good: #2fbf2f; --bad: #e66767; --wash: rgba(57,135,229,0.16); --sel: #3a3220;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: "Segoe UI", system-ui, -apple-system, sans-serif; line-height: 1.45; }
+  .ribbon { background: var(--ribbon); color: var(--ribbon-ink); padding: 10px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .ribbon .title { font-size: 16px; font-weight: 600; }
+  .ribbon .ctx { font-size: 12.5px; opacity: .8; }
+  .ribbon a { color: inherit; }
+  .ribbon .spacer { flex: 1; }
+  .banner { max-width: 1240px; margin: 12px auto 0; padding: 8px 14px; background: var(--sel); border-radius: 6px; font-size: 13px; color: var(--ink); }
+  main { max-width: 1240px; margin: 0 auto; padding: 14px 16px 90px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page h1 { font-size: 21px; margin: 4px 0 2px; font-weight: 600; }
+  .page .lead { margin: 0 0 14px; color: var(--ink-2); font-size: 14px; max-width: 900px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .tile { background: var(--tile); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+  .tile h3 { margin: 0 0 2px; font-size: 13.5px; font-weight: 600; }
+  .tile .sub { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+  .s3 { grid-column: span 3; } .s4 { grid-column: span 4; } .s5 { grid-column: span 5; } .s6 { grid-column: span 6; }
+  .s7 { grid-column: span 7; } .s8 { grid-column: span 8; } .s12 { grid-column: span 12; } .s2 { grid-column: span 2; }
+  @media (max-width: 900px) { .s2, .s3 { grid-column: span 6; } .s4, .s5, .s6, .s7, .s8 { grid-column: span 12; } }
+  .kpi .label { font-size: 12px; color: var(--ink-2); }
+  .kpi .val { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .kpi .note { font-size: 12px; color: var(--muted); }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  .slicer { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+  .slicer .lbl { font-size: 12px; color: var(--ink-2); margin-right: 4px; }
+  .slicer button { font: inherit; font-size: 12.5px; padding: 5px 11px; border: 1px solid var(--border); background: var(--tile); color: var(--ink);
+                   border-radius: 4px; cursor: pointer; }
+  .slicer button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--ink-2); margin: 0 0 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  ul.ins { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  ul.ins li { margin-bottom: 7px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { color: var(--ink-2); font-weight: 600; font-size: 12px; background: var(--page); }
+  th:first-child, td:first-child { text-align: left; }
+  td.l, th.l { text-align: left; }
+  td.bar-cell { text-align: left; }
+  .scroll { overflow-x: auto; }
+  .chip { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
+  .bar-cell { position: relative; }
+  .bar-cell span.b { position: absolute; left: 0; top: 4px; bottom: 4px; background: var(--wash); border-radius: 2px; }
+  .bar-cell span.t { position: relative; }
+  svg text { fill: var(--ink-2); font-size: 11px; font-family: inherit; }
+  svg .val { fill: var(--ink); font-size: 11.5px; font-weight: 600; }
+  svg .gridline { stroke: var(--grid); }
+  svg .axis { stroke: var(--axis); }
+  svg rect.hov:hover, svg path.hov:hover { opacity: .8; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--tile); border-top: 1px solid var(--border); display: flex;
+          justify-content: center; overflow-x: auto; z-index: 5; }
+  .tabs button { font: inherit; font-size: 13px; padding: 12px 16px; border: 0; background: none; color: var(--ink-2); cursor: pointer;
+                 border-top: 3px solid transparent; white-space: nowrap; }
+  .tabs button[aria-selected="true"] { color: var(--ink); font-weight: 600; border-top-color: #f2c811; }
+  .what-if { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
+  .what-if input { width: 220px; }
+  .pass { color: var(--good); font-weight: 600; }
+  .fail { color: var(--bad); font-weight: 600; }
+  .steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .steps div { background: var(--page); border-radius: 5px; padding: 8px 10px; font-size: 12.5px; }
+  .steps b { display: block; font-size: 13px; margin-bottom: 2px; }
+  @media (max-width: 700px) { .steps { grid-template-columns: 1fr 1fr; } }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  footer { font-size: 12px; color: var(--muted); margin-top: 18px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="ribbon">
+  <span class="title">TheLook · Customer 360</span>
+  <span class="ctx" id="ctx"></span>
+  <span class="spacer"></span>
+  <span class="ctx"><a href="https://github.com/evanpapanast/experiments/tree/main/customer-360">Code and checks</a> ·
+    <a href="https://evanpapanast.github.io/portfolio/">Evangelos Papanastasis</a></span>
+</div>
+<div class="banner"><b>Synthetic data.</b> TheLook is a fictional online fashion shop created by Google's Looker team, so the figures
+  show the method and the decisions, not a real market. TheLook does not state a currency; amounts are shown in $.</div>
+
+<main>
+  <!-- PAGE 1: OVERVIEW -->
+  <section class="page active" id="p-overview" aria-labelledby="h-overview">
+    <h1 id="h-overview">Where does profitable revenue come from?</h1>
+    <p class="lead">The last 24 months at a glance: revenue, margin, customers and channels. Five findings for leadership are on the right.</p>
+    <div class="grid" id="kpis"></div>
+    <div class="grid" style="margin-top:12px">
+      <div class="tile s8">
+        <h3>Net revenue by month and purchase channel</h3>
+        <p class="sub">After cancellations and returns. The first and last months are partial (from 20 Nov 2024 and up to 19 Nov 2026).</p>
+        <div class="legend" id="lg-month"></div>
+        <div id="ch-month"></div>
+      </div>
+      <div class="tile s4">
+        <h3>What leadership needs to know</h3>
+        <p class="sub">Every number comes from the data on the next pages.</p>
+        <ul class="ins" id="headline"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 2: CUSTOMER GROUPS -->
+  <section class="page" id="p-groups" aria-labelledby="h-groups">
+    <h1 id="h-groups">Customer groups</h1>
+    <p class="lead">Every registered adult customer sits in one group, based on how often and how recently they bought. Customers are only shown as groups.</p>
+    <div class="grid">
+      <div class="tile s6">
+        <h3>Share of customers vs share of revenue</h3>
+        <p class="sub">A small group of repeat buyers earns far more per customer.</p>
+        <div class="legend"><span><i style="background:var(--c-none)"></i>Customers</span><span><i style="background:var(--accent)"></i>Net revenue</span></div>
+        <div id="ch-seg"></div>
+      </div>
+      <div class="tile s6">
+        <h3>Who buys: groups by profile</h3>
+        <div class="slicer" id="sl-demo"><span class="lbl">Show by</span></div>
+        <p class="sub" id="demo-sub"></p>
+        <div id="ch-demo"></div>
+      </div>
+      <div class="tile s12">
+        <h3>Group overview and recommended action</h3>
+        <div class="scroll"><table id="tb-seg"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 3: CHANNELS -->
+  <section class="page" id="p-channels" aria-labelledby="h-channels">
+    <h1 id="h-channels">Channels: what customers prefer and where revenue comes from</h1>
+    <p class="lead"><b>Preferred channel</b> = the channel of most of a customer's website visits. <b>Purchase channel</b> = the channel of the visit
+      in which the order was placed. <b>First channel</b> = how the customer first found the shop.</p>
+    <div class="grid">
+      <div class="tile s5">
+        <h3>Preferred channel of buyers</h3>
+        <div class="slicer" id="sl-region"><span class="lbl">Region</span></div>
+        <div id="ch-pref"></div>
+      </div>
+      <div class="tile s7">
+        <h3>Net revenue and gross margin by purchase channel</h3>
+        <p class="sub">Gross margin = net revenue minus the product cost of the items sold.</p>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Net revenue</span><span><i style="background:var(--good)"></i>Gross margin</span></div>
+        <div id="ch-chrev"></div>
+      </div>
+      <div class="tile s7">
+        <h3>Preferred channel by customer group</h3>
+        <p class="sub">Share of each group's customers. Cells under 50 customers are hidden for privacy.</p>
+        <div class="legend" id="lg-segch"></div>
+        <div id="ch-segch"></div>
+      </div>
+      <div class="tile s5">
+        <h3>From visit to order, by channel</h3>
+        <p class="sub">Share of website visits in the 24 months.</p>
+        <div class="scroll"><table id="tb-funnel"></table></div>
+        <p class="sub" id="funnel-note" style="margin-top:8px"></p>
+      </div>
+      <div class="tile s12">
+        <h3>How customers first found us (first channel)</h3>
+        <div class="scroll"><table id="tb-acq"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 4: REVENUE VS COST -->
+  <section class="page" id="p-cost" aria-labelledby="h-cost">
+    <h1 id="h-cost">Revenue against cost</h1>
+    <p class="lead">From the value customers ordered to the margin we keep. Only real costs in the data are used: cancellations, returns and the
+      product cost of what was sold. Marketing spend is not in the data, so it is not shown.</p>
+    <div class="grid">
+      <div class="tile s7">
+        <h3>From ordered value to gross margin</h3>
+        <div class="slicer" id="sl-chcost"><span class="lbl">Channel</span></div>
+        <p class="sub">Percentages under each bar are shares of the ordered value.</p>
+        <div id="ch-wf"></div>
+      </div>
+      <div class="tile s5">
+        <h3>Channel economics</h3>
+        <p class="sub">Per channel of the purchase visit.</p>
+        <div class="scroll"><table id="tb-chcost"></table></div>
+      </div>
+      <div class="tile s12">
+        <h3>Gross margin and returns by product category</h3>
+        <p class="sub">Where the margin is made and lost. Sorted by gross margin %; bar length = net revenue.</p>
+        <div class="scroll"><table id="tb-cat"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 5: ACTIONS -->
+  <section class="page" id="p-actions" aria-labelledby="h-actions">
+    <h1 id="h-actions">What to do next</h1>
+    <p class="lead">Five actions, each sized with the group's own average order value. Move the slider to test how many customers (or how much
+      lost value) each action wins. This is a what-if on real averages, not a forecast.</p>
+    <div class="grid">
+      <div class="tile s12">
+        <h3>Size of the opportunity</h3>
+        <div class="what-if"><label for="rate">Success rate</label><input type="range" id="rate" min="1" max="30" step="1" value="10">
+          <b id="rate-out">10%</b><span class="sub" style="margin:0">of each pool converts, or of each lost value is saved</span></div>
+        <div class="scroll"><table id="tb-opp"></table></div>
+      </div>
+      <div class="tile s6">
+        <h3>Customer actions</h3>
+        <ul class="ins" id="act-cust"></ul>
+      </div>
+      <div class="tile s6">
+        <h3>Channel and cost actions</h3>
+        <ul class="ins" id="act-ch"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE 6: DATA AND GOVERNANCE -->
+  <section class="page" id="p-gov" aria-labelledby="h-gov">
+    <h1 id="h-gov">Data, privacy and quality</h1>
+    <p class="lead">How the report was built, how personal data was kept out, and the checks that must pass before anything is published.</p>
+    <div class="grid">
+      <div class="tile s12">
+        <h3>How it was built</h3>
+        <div class="steps">
+          <div><b>1. Ask</b>Which customer groups and channels drive profitable revenue, and where should next year's marketing go?</div>
+          <div><b>2. Connect</b>Google BigQuery public data (TheLook), read through the BigQuery connector in Claude.</div>
+          <div><b>3. Model</b>SQL in BigQuery: minimised staging tables, one group per customer, group-level report tables.</div>
+          <div><b>4. Check</b>15 checks in BigQuery plus a quality gate on the published files in GitHub Actions.</div>
+          <div><b>5. Ship</b>Reviewed pull request, then published on GitHub Pages.</div>
+        </div>
+      </div>
+      <div class="tile s6">
+        <h3>GDPR: what was kept out</h3>
+        <ul class="ins">
+          <li><b>Data minimisation:</b> only customer ID, age band, gender, region, first channel and sign-up month were copied. Names, email, street address,
+            postal code, city, state, GPS position, exact age, IP address, browser and page addresses never left the public dataset.</li>
+          <li><b>No children:</b> customers under 18 are excluded completely.</li>
+          <li><b>No single person can be seen:</b> the report and data files hold group totals only. Every group has at least 50 customers; smaller cells are hidden.</li>
+          <li><b>Country removed:</b> countries are grouped into four regions so that small countries cannot single anyone out.</li>
+          <li><b>Synthetic source:</b> the data describes no real people. The same rules were applied as if it did.</li>
+        </ul>
+      </div>
+      <div class="tile s6">
+        <h3>Definitions</h3>
+        <ul class="ins">
+          <li><b>Net revenue:</b> value of items not cancelled and not returned. Items still processing or shipped count as sold.</li>
+          <li><b>Gross margin:</b> net revenue minus the product cost of those items.</li>
+          <li><b>Return rate:</b> returned value ÷ value of items not cancelled. <b>Cancellation rate:</b> cancelled value ÷ all ordered value.</li>
+          <li><b>Purchase channel:</b> channel of the purchase visit closest in time to the order (within 24 hours); all orders matched.</li>
+          <li><b>Window:</b> 20 Nov 2024 to 19 Nov 2026. The source grows every day, so the snapshot is frozen at 19 Nov 2026.</li>
+        </ul>
+      </div>
+      <div class="tile s12">
+        <h3>Quality checks in BigQuery</h3>
+        <div class="scroll"><table id="tb-qa"></table></div>
+      </div>
+    </div>
+    <footer id="foot"></footer>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist" aria-label="Report pages">
+  <button role="tab" data-p="p-overview" aria-selected="true">Overview</button>
+  <button role="tab" data-p="p-groups" aria-selected="false">Customer groups</button>
+  <button role="tab" data-p="p-channels" aria-selected="false">Channels</button>
+  <button role="tab" data-p="p-cost" aria-selected="false">Revenue vs cost</button>
+  <button role="tab" data-p="p-actions" aria-selected="false">Actions</button>
+  <button role="tab" data-p="p-gov" aria-selected="false">Data and governance</button>
+</nav>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  const C = window.C360;
+  const CH = ["Email", "Google Ads", "Facebook", "YouTube", "Organic"];
+  const COL = { "Email": "var(--c-email)", "Google Ads": "var(--c-gads)", "Facebook": "var(--c-fb)", "YouTube": "var(--c-yt)", "Organic": "var(--c-org)", "No visits": "var(--c-none)" };
+  const $ = (id) => document.getElementById(id);
+  const money = (v) => { const a = Math.abs(v), s = v < 0 ? "-" : "";
+    return a >= 1e6 ? s + "$" + (a / 1e6).toFixed(2) + "m" : a >= 1e3 ? s + "$" + Math.round(a / 1e3).toLocaleString("en") + "k" : s + "$" + Math.round(a).toLocaleString("en"); };
+  const num = (v) => Math.round(v).toLocaleString("en");
+  const pc = (v, d = 0) => v == null ? "–" : (v * 100).toFixed(d) + "%";
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const svgEl = (w, h, inner, label) => `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${esc(label)}">${inner}</svg>`;
+  const k = C.kpi;
+
+  $("ctx").textContent = "Period: " + C.meta.window + " · Adult customers only · Groups of 50+";
+
+  // ---------- tabs ----------
+  document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", x === b ? "true" : "false"));
+    document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === b.dataset.p));
+    window.scrollTo(0, 0);
+  }));
+
+  function slicer(el, label, items, onPick, start) {
+    items.forEach((it) => {
+      const b = document.createElement("button");
+      b.textContent = it; b.setAttribute("aria-pressed", it === start ? "true" : "false");
+      b.addEventListener("click", () => { el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); onPick(it); });
+      el.appendChild(b);
+    });
+    onPick(start);
+  }
+
+  // horizontal bars: rows [{label, values:[{v,color,title}]}], grouped bars per row
+  function hbars(rows, fmt, opts = {}) {
+    const W = opts.W || 560, lw = opts.lw || 120, rowH = opts.rowH || 30, n = rows[0].values.length, bh = Math.min(18, (rowH - 8) / n);
+    const max = opts.max || Math.max(...rows.flatMap((r) => r.values.map((x) => x.v || 0)));
+    const plotW = W - lw - (opts.rw || 70), H = rows.length * rowH + 6;
+    let g = "";
+    rows.forEach((r, i) => {
+      const y0 = i * rowH + 4;
+      g += `<text x="${lw - 8}" y="${y0 + rowH / 2}" text-anchor="end" dominant-baseline="middle">${esc(r.label)}</text>`;
+      r.values.forEach((x, j) => {
+        const y = y0 + (rowH - n * bh - (n - 1) * 2) / 2 + j * (bh + 2), w = x.v == null ? 0 : Math.max(1, (x.v / max) * plotW);
+        g += `<rect class="hov" x="${lw}" y="${y}" width="${w}" height="${bh}" rx="3" fill="${x.color}"><title>${esc(r.label + ": " + (x.title || fmt(x.v)))}</title></rect>`;
+        g += `<text class="val" x="${lw + w + 5}" y="${y + bh / 2}" dominant-baseline="middle">${x.v == null ? "hidden" : esc(x.text || fmt(x.v))}</text>`;
+      });
+    });
+    g += `<line class="axis" x1="${lw}" x2="${lw}" y1="0" y2="${H}"/>`;
+    return svgEl(W, H, g, opts.label || "bar chart");
+  }
+
+  // ---------- PAGE 1 ----------
+  const kp = [
+    ["Net revenue", money(k.net_revenue), `<span class="up">+${pc(k.growth_12m)}</span> last 12 months vs the 12 before`],
+    ["Gross margin", pc(k.gm_pct, 1), money(k.gross_margin) + " after product cost"],
+    ["Buyers", num(k.buyers), `of ${num(k.registered)} registered adults`],
+    ["Repeat buyers", pc(k.repeat_rate), "of buyers ordered 2+ times"],
+    ["Average order", "$" + k.aov.toFixed(2), num(k.orders) + " orders"],
+    ["Lost to cancellations and returns", money(k.cancelled_value + k.returned_value), `cancelled ${pc(k.cancel_rate)} · returned ${pc(k.return_rate)}`],
+  ];
+  $("kpis").innerHTML = kp.map((x) => `<div class="tile kpi s2"><div class="label">${x[0]}</div><div class="val">${x[1]}</div><div class="note">${x[2]}</div></div>`).join("");
+  $("headline").innerHTML = C.insights.headline.map((t) => `<li>${esc(t)}</li>`).join("");
+  $("lg-month").innerHTML = CH.map((c) => `<span><i style="background:${COL[c]}"></i>${c}</span>`).join("");
+  (function () {
+    const m = C.monthly, W = 760, H = 260, L = 46, B = 26, T = 8, pw = W - L - 8, ph = H - B - T;
+    const tot = m.map((r) => CH.reduce((s, c) => s + r[c], 0)), max = Math.ceil(Math.max(...tot) / 1e5) * 1e5, bw = pw / m.length;
+    let g = "";
+    for (let t = 0; t <= max; t += 1e5) { const y = T + ph - (t / max) * ph;
+      g += `<line class="gridline" x1="${L}" x2="${W - 8}" y1="${y}" y2="${y}"/><text x="${L - 6}" y="${y}" text-anchor="end" dominant-baseline="middle">${money(t)}</text>`; }
+    m.forEach((r, i) => {
+      let y = T + ph; const x = L + i * bw + bw * 0.15, w = bw * 0.7;
+      CH.forEach((c) => { const h = (r[c] / max) * ph; y -= h;
+        g += `<rect class="hov" x="${x}" y="${y}" width="${w}" height="${Math.max(0, h - 1)}" fill="${COL[c]}"><title>${r.month} · ${c}: ${money(r[c])}</title></rect>`; });
+      if (i % 3 === 0 || i === m.length - 1) g += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${r.month.slice(2).replace("-", "/")}</text>`;
+    });
+    g += `<line class="axis" x1="${L}" x2="${W - 8}" y1="${T + ph}" y2="${T + ph}"/>`;
+    $("ch-month").innerHTML = svgEl(W, H, g, "Stacked columns of monthly net revenue by purchase channel, rising from about $36k in late Nov 2024 to $393k in Nov 2026 to date");
+  })();
+
+  // ---------- PAGE 2 ----------
+  const segs = C.segments;
+  $("ch-seg").innerHTML = hbars(segs.map((s) => ({ label: s.segment, values: [
+      { v: s.customer_share, color: "var(--c-none)", text: pc(s.customer_share), title: num(s.customers) + " customers (" + pc(s.customer_share) + ")" },
+      { v: s.revenue_share, color: "var(--accent)", text: pc(s.revenue_share), title: money(s.net_revenue) + " (" + pc(s.revenue_share) + ")" }] })),
+    (v) => pc(v), { label: "Share of customers and revenue by group", rowH: 36, lw: 118 });
+  const dimLabel = { "Region": "region", "Age band": "age_band", "Gender": "gender" };
+  slicer($("sl-demo"), "Show by", Object.keys(dimLabel), (d) => {
+    const rows = C.demographics.filter((r) => r.dim === dimLabel[d]).sort((a, b) => a.val.localeCompare(b.val));
+    $("demo-sub").textContent = "Net revenue of each group, with revenue per buyer. Every group has the same margin (" +
+      pc(Math.min(...rows.map((r) => r.gm_pct)), 1) + " to " + pc(Math.max(...rows.map((r) => r.gm_pct)), 1) + ").";
+    $("ch-demo").innerHTML = hbars(rows.map((r) => ({ label: r.val, values: [{ v: r.net_revenue, color: "var(--accent)",
+      text: money(r.net_revenue) + " · " + "$" + Math.round(r.revenue_per_buyer) + " per buyer", title: money(r.net_revenue) + ", " + num(r.buyers) + " buyers" }] })),
+      money, { label: "Net revenue by " + d, rowH: 32, lw: 100, rw: 190 });
+  }, "Region");
+  $("tb-seg").innerHTML = `<tr><th>Group</th><th class="l">Who</th><th>Customers</th><th>Net revenue</th><th>Per customer</th><th>Avg order</th><th>Return rate</th><th class="l">Action</th></tr>` +
+    segs.map((s) => `<tr><td><b>${s.segment}</b></td><td class="l">${s.definition}</td><td>${num(s.customers)}</td><td>${money(s.net_revenue)}</td>
+      <td>${s.net_revenue ? "$" + Math.round(s.revenue_per_customer) : "–"}</td><td>${s.aov ? "$" + s.aov.toFixed(0) : "–"}</td><td>${pc(s.return_rate, 1)}</td><td class="l">${s.action}</td></tr>`).join("");
+
+  // ---------- PAGE 3 ----------
+  const regions = ["All regions", ...[...new Set(C.region_channel.map((r) => r.region))].sort()];
+  slicer($("sl-region"), "Region", regions, (rg) => {
+    const rows = CH.map((c) => ({ c, n: C.region_channel.filter((r) => r.preferred_channel === c && (rg === "All regions" || r.region === rg)).reduce((s, r) => s + r.customers, 0) }));
+    const tot = rows.reduce((s, r) => s + r.n, 0);
+    $("ch-pref").innerHTML = hbars(rows.map((r) => ({ label: r.c, values: [{ v: r.n / tot, color: COL[r.c], text: pc(r.n / tot) + " · " + num(r.n), title: num(r.n) + " buyers" }] })),
+      (v) => pc(v), { label: "Preferred channel of buyers, " + rg, lw: 84, rowH: 36, W: 420, rw: 110 });
+  }, "All regions");
+  const chs = C.channels;
+  $("ch-chrev").innerHTML = hbars(chs.map((c) => ({ label: c.channel, values: [
+      { v: c.net_revenue, color: "var(--accent)", text: money(c.net_revenue) + " (" + pc(c.revenue_share) + ")" },
+      { v: c.gross_margin, color: "var(--good)", text: money(c.gross_margin) + " · " + pc(c.gm_pct, 1) }] })),
+    money, { label: "Net revenue and gross margin by purchase channel", lw: 90, rowH: 44, W: 600, rw: 140 });
+  $("lg-segch").innerHTML = [...CH, "No visits"].map((c) => `<span><i style="background:${COL[c]}"></i>${c}</span>`).join("");
+  (function () {
+    const W = 640, lw = 118, rowH = 30, H = segs.length * rowH + 4, pw = W - lw - 10; let g = "";
+    segs.forEach((s, i) => {
+      const y = i * rowH + 5, keys = [...CH, "No visits"], tot = s.customers; let x = lw;
+      g += `<text x="${lw - 8}" y="${y + 10}" text-anchor="end" dominant-baseline="middle">${s.segment}</text>`;
+      keys.forEach((c) => { const v = s.channel_mix[c]; if (v == null) return; const w = (v / tot) * pw;
+        g += `<rect class="hov" x="${x}" y="${y}" width="${Math.max(0, w - 1.5)}" height="20" fill="${COL[c]}"><title>${s.segment} · ${c}: ${num(v)} (${pc(v / tot)})</title></rect>`;
+        if (w > 34) g += `<text x="${x + 5}" y="${y + 10}" dominant-baseline="middle" style="fill:#fff;font-weight:600">${pc(v / tot)}</text>`;
+        x += w; });
+    });
+    $("ch-segch").innerHTML = svgEl(W, H, g, "100% stacked bars of preferred channel for each customer group");
+  })();
+  $("tb-funnel").innerHTML = `<tr><th>Channel</th><th>Visits</th><th>Added to cart</th><th>Bought</th><th>Cart → order</th></tr>` +
+    chs.map((c) => `<tr><td><span class="chip" style="background:${COL[c.channel]}"></span>${c.channel}</td><td>${num(c.sessions)}</td><td>${pc(c.visit_to_cart, 1)}</td>
+      <td>${pc(c.visit_to_purchase, 1)}</td><td>${pc(c.cart_to_purchase, 1)}</td></tr>`).join("");
+  const abandon = 1 - chs.reduce((s, c) => s + c.visit_to_purchase * c.sessions, 0) / chs.reduce((s, c) => s + c.visit_to_cart * c.sessions, 0);
+  $("funnel-note").textContent = "About " + pc(abandon) + " of visits that reach the cart end without an order, in every channel. " + C.insights.channel_note;
+  $("tb-acq").innerHTML = `<tr><th>First channel</th><th>Registered</th><th>Became buyers</th><th>Repeat buyers</th><th>Net revenue</th><th>Share</th><th>Revenue per buyer</th><th>Gross margin %</th></tr>` +
+    C.acquisition.map((a) => `<tr><td>${a.channel}</td><td>${num(a.registered)}</td><td>${pc(a.buyer_rate)}</td><td>${pc(a.repeat_rate)}</td>
+      <td class="bar-cell"><span class="b" style="width:${(a.revenue_share * 100).toFixed(1)}%"></span><span class="t">${money(a.net_revenue)}</span></td>
+      <td>${pc(a.revenue_share)}</td><td>$${Math.round(a.revenue_per_buyer)}</td><td>${pc(a.gm_pct, 1)}</td></tr>`).join("") +
+    `<tr><td colspan="8" class="l" style="color:var(--muted)">Search brings ${pc(C.acquisition[0].revenue_share)} of all customers' revenue. Every first channel turns about half of sign-ups into buyers and earns the same revenue per buyer.</td></tr>`;
+
+  // ---------- PAGE 4 ----------
+  function waterfall(ch) {
+    let o, canc, ret, net, cost;
+    if (ch === "All channels") { o = k.ordered_value; canc = k.cancelled_value; ret = k.returned_value; net = k.net_revenue; cost = k.product_cost; }
+    else { const c = chs.find((x) => x.channel === ch); canc = c.cancelled_value; ret = c.returned_value; net = c.net_revenue; cost = c.product_cost; o = net + ret + canc; }
+    const steps = [["Ordered", o, 0, "var(--axis)"], ["Cancelled", -canc, o, "var(--bad)"], ["Returned", -ret, o - canc, "var(--bad)"],
+                   ["Net revenue", net, 0, "var(--accent)"], ["Product cost", -cost, net, "var(--c-gads)"], ["Gross margin", net - cost, 0, "var(--good)"]];
+    const W = 640, H = 270, L = 10, B = 40, T = 22, pw = W - 2 * L, ph = H - B - T, bw = pw / steps.length; let g = "";
+    steps.forEach((s, i) => {
+      const top = s[1] >= 0 ? s[2] + s[1] : s[2], bot = s[1] >= 0 ? s[2] : s[2] + s[1];
+      const y = T + ph - (top / o) * ph, h = ((top - bot) / o) * ph, x = L + i * bw + bw * 0.15, w = bw * 0.7;
+      g += `<rect class="hov" x="${x}" y="${y}" width="${w}" height="${Math.max(1, h)}" rx="2" fill="${s[3]}"><title>${s[0]}: ${money(s[1])}</title></rect>`;
+      g += `<text class="val" x="${x + w / 2}" y="${y - 6}" text-anchor="middle">${money(s[1])}</text>`;
+      g += `<text x="${x + w / 2}" y="${H - 22}" text-anchor="middle">${s[0]}</text>`;
+      g += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${pc(Math.abs(s[1]) / o)}</text>`;
+    });
+    g += `<line class="axis" x1="${L}" x2="${W - L}" y1="${T + ph}" y2="${T + ph}"/>`;
+    $("ch-wf").innerHTML = svgEl(W, H, g, "Waterfall from ordered value to gross margin, " + ch);
+  }
+  slicer($("sl-chcost"), "Channel", ["All channels", ...CH], waterfall, "All channels");
+  $("tb-chcost").innerHTML = `<tr><th>Channel</th><th>Net revenue</th><th>Margin %</th><th>Returns</th><th>Cancelled</th><th>Avg order</th></tr>` +
+    chs.map((c) => `<tr><td><span class="chip" style="background:${COL[c.channel]}"></span>${c.channel}</td><td>${money(c.net_revenue)}</td><td>${pc(c.gm_pct, 1)}</td>
+      <td>${pc(c.return_rate, 1)}</td><td>${pc(c.cancel_rate, 1)}</td><td>$${c.aov.toFixed(0)}</td></tr>`).join("") +
+    `<tr><td colspan="6" class="l" style="color:var(--muted)">The channels are almost identical on margin, returns, cancellations and order size. Choose channels by reach and customer preference, not by margin.</td></tr>`;
+  const cats = [...C.categories].sort((a, b) => b.gm_pct - a.gm_pct), cmax = Math.max(...cats.map((c) => c.net_revenue));
+  $("tb-cat").innerHTML = `<tr><th>Category</th><th class="l" style="width:34%">Net revenue</th><th>Gross margin</th><th>Margin %</th><th>Return rate</th></tr>` +
+    cats.map((c) => `<tr><td>${esc(c.category)}</td><td class="l bar-cell"><span class="b" style="width:${(c.net_revenue / cmax * 100).toFixed(1)}%"></span><span class="t">${money(c.net_revenue)}</span></td>
+      <td>${money(c.gross_margin)}</td><td class="${c.gm_pct >= 0.55 ? "up" : c.gm_pct < 0.45 ? "down" : ""}">${pc(c.gm_pct, 1)}</td><td>${pc(c.return_rate, 1)}</td></tr>`).join("");
+
+  // ---------- PAGE 5 ----------
+  function opp() {
+    const r = +$("rate").value / 100; $("rate-out").textContent = Math.round(r * 100) + "%";
+    let tr = 0, tm = 0;
+    const rows = C.opportunities.map((o) => {
+      const rev = o.money_pool ? o.pool * r : o.pool * r * o.value, gm = rev * k.gm_pct; tr += rev; tm += gm;
+      const pool = o.money_pool ? money(o.pool) : num(o.pool) + " customers", unit = o.money_pool ? "–" : "$" + o.value.toFixed(0);
+      return `<tr><td>${o.label}</td><td>${pool}</td><td>${unit}</td><td class="l" style="color:var(--muted)">${o.basis}</td><td><b>${money(rev)}</b></td><td>${money(gm)}</td></tr>`;
+    });
+    $("tb-opp").innerHTML = `<tr><th>Action</th><th>Pool</th><th>Value per order</th><th class="l">Based on</th><th>Extra net revenue</th><th>Extra gross margin</th></tr>` + rows.join("") +
+      `<tr><td><b>Total</b></td><td></td><td></td><td></td><td><b>${money(tr)}</b></td><td><b>${money(tm)}</b></td></tr>` +
+      `<tr><td colspan="6" class="l" style="color:var(--muted)">Gross margin uses the overall margin of ${pc(k.gm_pct, 1)}. Before spending on any action, compare its cost with the extra gross margin shown here.</td></tr>`;
+  }
+  $("rate").addEventListener("input", opp); opp();
+  const S = Object.fromEntries(segs.map((s) => [s.segment, s])), ch = Object.fromEntries(chs.map((c) => [c.channel, c]));
+  $("act-cust").innerHTML = [
+    `<b>Second order first.</b> ${num(S["One-time buyers"].customers)} one-time buyers and ${num(S["New"].customers)} new buyers are the largest pool. Run a second-order programme, led by email (their main channel).`,
+    `<b>Win back the ${num(S["At risk"].customers)} at-risk repeat buyers</b> before they lapse: they spent ${money(S["At risk"].net_revenue)} in the period. ${pc(S["At risk"].channel_mix["Email"] / S["At risk"].customers)} prefer email, ${pc(S["At risk"].channel_mix["Google Ads"] / S["At risk"].customers)} Google Ads.`,
+    `<b>Protect Champions and Loyal customers</b> (${pc(S["Champions"].customer_share + S["Loyal"].customer_share)} of customers, ${pc(S["Champions"].revenue_share + S["Loyal"].revenue_share)} of revenue) with service and early access rather than discounts.`,
+    `<b>Leave most dormant accounts alone.</b> Of ${num(S["Never bought"].customers + S["Lapsed"].customers)} customers with no purchase, most did not visit in 24 months; target only the ${num(S["Never bought"].visiting_customers)} who still visit but never bought.`,
+  ].map((t) => `<li>${t}</li>`).join("");
+  $("act-ch").innerHTML = [
+    `<b>Keep email as the core channel.</b> It brings ${pc(ch["Email"].revenue_share)} of revenue and is the preferred channel of ${pc(ch["Email"].preferred_share)} of buyers.`,
+    `<b>Grow channels by reach, not by margin.</b> All channels make ${pc(Math.min(...chs.map((c) => c.gm_pct)), 0)} gross margin and convert the same share of visits, so extra budget should go where reach can still grow at the lowest cost per visit.`,
+    `<b>Cut cancellations.</b> ${money(k.cancelled_value)} of orders (${pc(k.cancel_rate)}) were cancelled: more than the ${money(k.returned_value)} returned. Find out why (stock, delivery time, payment).`,
+    `<b>Fix low-margin categories.</b> Several categories earn under 45% gross margin; review prices and supplier costs there before promoting them.`,
+    `<b>Next step for real data:</b> add marketing spend per channel to measure return on spend; this dataset does not contain it.`,
+  ].map((t) => `<li>${t}</li>`).join("");
+
+  // ---------- PAGE 6 ----------
+  $("tb-qa").innerHTML = `<tr><th class="l">Area</th><th class="l">Check</th><th class="l">Result</th><th>Status</th></tr>` +
+    C.qa_bigquery.map((q) => `<tr><td class="l">${q.area}</td><td class="l">${esc(q.check)}</td><td class="l">${esc(q.result)}</td><td class="${q.passed ? "pass" : "fail"}">${q.passed ? "Passed" : "Failed"}</td></tr>`).join("");
+  $("foot").innerHTML = `Source: ${esc(C.meta.source)}, read from the Google BigQuery public datasets; only group totals are published. Built ${C.meta.built} with BigQuery and Claude. ` +
+    `Independent analysis, not endorsed by Google. <a href="https://github.com/evanpapanast/experiments/tree/main/customer-360">Code, SQL and checks on GitHub</a>.`;
+})();
+</script>
+</body>
+</html>
