@@ -24,7 +24,7 @@ Rates are fractions (0.12 = 12%). Empty cells are suppressed groups under 50 cus
 | Return rate | Returned value ÷ gross sales |
 | Cancellation rate | Cancelled value ÷ (gross sales + cancelled value) |
 | Purchase channel | Channel of the purchase visit closest to the order (within 24 h): Email, Google Ads, Facebook, YouTube, Organic |
-| Preferred channel | Channel of most of a customer's visits; "No visits" if none in the window |
+| Preferred channel | Channel of most of a customer's visits; ties go to the most recent visit, then channel name (A–Z). "No visits" if none in the window |
 | First channel | `traffic_source` at sign-up: Search, Organic, Facebook, Email, Display |
 | Champions | 3+ orders, last order within 180 days |
 | Loyal | 2 orders, last order within 180 days |

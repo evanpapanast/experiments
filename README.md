@@ -12,7 +12,7 @@ reports as code) on a question I find interesting.
 | [What the ECB says, and what it does](ecb-speeches/) | Do ECB speeches predict interest rate decisions, and what is the ECB talking about now? | ECB speeches dataset, ECB statistics (interest rates) | Python, text analysis, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/ecb-speeches/dashboard/) |
 | [Iowa spirits market: price, volume, forecast and budget](liquor-market/) | Is growth coming from price or volume, how good was the budget, and what should we plan for next year? | Iowa Liquor Sales (CC BY 4.0) via BigQuery public datasets | BigQuery, SQL, AI.FORECAST, Python, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/liquor-market/dashboard/) |
 | [Automated monthly close (concept)](monthly-close/) | Can a governed month-end close run by itself, with checks a person can audit? | Iowa Liquor Sales (CC BY 4.0) via BigQuery public datasets | BigQuery, SQL, AI.FORECAST, Python, GitHub Actions, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/monthly-close/dashboard/) |
-| [Customer 360: customers and channels](customer-360/) | Which customer groups and channels create the most profitable revenue, and where should marketing go next? | TheLook eCommerce (synthetic, Google) via BigQuery public datasets | BigQuery, SQL, Python, GitHub Actions, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/customer-360/dashboard/) |
+| [Customer 360: customers and channels](customer-360/) | Which customer groups and channels create the most profitable revenue, and where should marketing go next? | TheLook eCommerce (synthetic, Google) via BigQuery public datasets | dbt, BigQuery, SQL, Python, GitHub Actions, HTML/SVG | [Open](https://evanpapanast.github.io/experiments/customer-360/dashboard/) |
 
 ## Conventions
 
@@ -23,6 +23,7 @@ Every experiment folder follows the same layout:
 ├── README.md        question, key findings, pipeline, how to rerun
 ├── scripts/         Python: extract, transform, build report data
 ├── sql/             BigQuery DDL, loads, reporting views (when a warehouse is used)
+├── dbt/             dbt project, when the model is built with dbt
 ├── data/            tidy, small CSVs (raw downloads are not committed)
 └── dashboard/       self-contained interactive report (opens in any browser)
 ```

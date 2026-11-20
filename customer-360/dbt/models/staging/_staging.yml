@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: "One row per adult customer: ID, age band, gender, region, first channel, sign-up month."
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: age_band
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['18-24', '25-34', '35-44', '45-54', '55-70']}
+      - name: gender
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['Men', 'Women']}
+      - name: region
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['Asia-Pacific', 'North America', 'Latin America', 'Europe']}
+      - name: acquisition_channel
+        description: "How the customer first found the shop."
+        data_tests: [not_null]
+
+  - name: stg_sessions
+    description: "One row per website visit in the window. No IP, place, browser or page address."
+    columns:
+      - name: session_id
+        data_tests: [unique, not_null]
+      - name: channel
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['Email', 'Google Ads', 'Facebook', 'YouTube', 'Organic']}
+
+  - name: stg_order_items
+    description: "One row per order line in the window, with product cost and purchase channel."
+    columns:
+      - name: order_item_id
+        data_tests: [unique, not_null]
+      - name: customer_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_customers'), field: customer_id}
+      - name: sale_price
+        data_tests:
+          - between: {arguments: {min_value: 0.01, max_value: 100000}}
+      - name: product_cost
+        data_tests:
+          - between: {arguments: {min_value: 0.01, max_value: 100000}}
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['Complete', 'Shipped', 'Processing', 'Cancelled', 'Returned']}

@@ -239,8 +239,8 @@
         <div class="steps">
           <div><b>1. Ask</b>Which customer groups and channels drive profitable revenue, and where should next year's marketing go?</div>
           <div><b>2. Connect</b>Google BigQuery public data (TheLook), read through the BigQuery connector in Claude.</div>
-          <div><b>3. Model</b>SQL in BigQuery: minimised staging tables, one group per customer, group-level report tables.</div>
-          <div><b>4. Check</b>15 checks in BigQuery plus a quality gate on the published files in GitHub Actions.</div>
+          <div><b>3. Model</b>A dbt project on BigQuery: minimised staging tables, one group per customer, group-level report tables, with built-in cost caps.</div>
+          <div><b>4. Check</b>43 dbt tests in BigQuery plus a quality gate on the published files in GitHub Actions.</div>
           <div><b>5. Ship</b>Reviewed pull request, then published on GitHub Pages.</div>
         </div>
       </div>
@@ -262,11 +262,12 @@
           <li><b>Gross margin:</b> net revenue minus the product cost of those items.</li>
           <li><b>Return rate:</b> returned value ÷ value of items not cancelled. <b>Cancellation rate:</b> cancelled value ÷ all ordered value.</li>
           <li><b>Purchase channel:</b> channel of the purchase visit closest in time to the order (within 24 hours); all orders matched.</li>
+          <li><b>Preferred channel:</b> channel of most of a customer's visits; ties go to the most recent visit, then a fixed channel order, so every run gives the same answer.</li>
           <li><b>Window:</b> 20 Nov 2024 to 19 Nov 2026. The source grows every day, so the snapshot is frozen at 19 Nov 2026.</li>
         </ul>
       </div>
       <div class="tile s12">
-        <h3>Quality checks in BigQuery</h3>
+        <h3>dbt tests in BigQuery (43, all passed)</h3>
         <div class="scroll"><table id="tb-qa"></table></div>
       </div>
     </div>

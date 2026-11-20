@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: rpt_segments
+    description: "Customer groups: size, revenue, margin, returns, orders."
+    columns:
+      - name: segment
+        data_tests: [unique, not_null]
+      - name: customers
+        data_tests: [min_group_size]
+  - name: rpt_segment_channel
+    description: "Customer group x preferred channel. Cells under 50 customers are blanked."
+    columns:
+      - name: customers
+        data_tests: [min_group_size]
+  - name: rpt_channel_purchase
+    description: "Revenue, product cost, returns and cancellations by channel of the purchase visit."
+    columns:
+      - name: channel
+        data_tests: [unique, not_null]
+      - name: customers
+        data_tests: [min_group_size]
+  - name: rpt_channel_acquisition
+    description: "Customers and revenue by how the customer first found the shop."
+    columns:
+      - name: channel
+        data_tests: [unique, not_null]
+      - name: registered
+        data_tests: [min_group_size]
+  - name: rpt_funnel
+    description: "Website visits by channel: reached product, cart and purchase."
+    columns:
+      - name: channel
+        data_tests: [unique, not_null]
+  - name: rpt_monthly
+    description: "Net revenue and gross margin by month and purchase channel."
+  - name: rpt_demographics
+    description: "Customers, buyers and revenue by region, age band and gender."
+    columns:
+      - name: customers
+        data_tests: [min_group_size]
+  - name: rpt_region_channel
+    description: "Buyers by region and preferred channel."
+    columns:
+      - name: customers
+        data_tests: [min_group_size]
+  - name: rpt_category
+    description: "Revenue, margin and returns by product category. Product-level, no customer data."
+
+exposures:
+  - name: customer_360_report
+    label: Customer 360 management report
+    type: dashboard
+    maturity: medium
+    url: https://evanpapanast.github.io/experiments/customer-360/dashboard/
+    description: "Six-page report for leadership: customer groups, channels, revenue vs cost, actions."
+    depends_on:
+      - ref('rpt_segments')
+      - ref('rpt_segment_channel')
+      - ref('rpt_channel_purchase')
+      - ref('rpt_channel_acquisition')
+      - ref('rpt_funnel')
+      - ref('rpt_monthly')
+      - ref('rpt_demographics')
+      - ref('rpt_region_channel')
+      - ref('rpt_category')
+    owner:
+      name: Evangelos Papanastasis

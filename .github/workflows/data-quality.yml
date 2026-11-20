@@ -89,6 +89,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Check the dbt project parses and compiles (offline, no BigQuery access, no cost)
+        run: |
+          pip install --quiet dbt-core dbt-bigquery
+          openssl genrsa -out /tmp/k.pem 2048
+          python -c "import json; json.dump({'type':'service_account','project_id':'project-57338774-2b06-4ac1-ba9','private_key_id':'offline','private_key':open('/tmp/k.pem').read(),'client_email':'offline@project-57338774-2b06-4ac1-ba9.iam.gserviceaccount.com','client_id':'0','token_uri':'https://oauth2.googleapis.com/token'}, open('/tmp/offline_sa.json','w'))"
+          cd ../dbt
+          DBT_PROFILES_DIR=. dbt parse
+          DBT_PROFILES_DIR=. dbt compile --target offline --no-populate-cache --no-introspect
+          python ../scripts/03_dbt_connector_plan.py
       - name: Rebuild report data from the extract
         run: python 01_build_report_data.py
       - name: Fail if report data differs from what the script produces

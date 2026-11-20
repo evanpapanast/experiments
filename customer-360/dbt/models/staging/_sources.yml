@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: thelook
+    description: >
+      TheLook eCommerce, a fully synthetic dataset created by Google's Looker team, in the BigQuery public datasets.
+      Personal-data columns exist in the source (names, e-mail, address, postal code, city, GPS, exact age, IP, browser)
+      and are never selected by any model.
+    database: bigquery-public-data
+    schema: thelook_ecommerce
+    tables:
+      - name: users
+      - name: events
+      - name: orders
+      - name: order_items
+      - name: inventory_items
+      - name: products
