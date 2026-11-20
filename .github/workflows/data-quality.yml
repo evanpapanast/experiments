@@ -78,3 +78,23 @@ jobs:
       - name: Publish checks to the run summary
         if: always()
         run: cat ../governance/checks.md >> "$GITHUB_STEP_SUMMARY"
+
+  customer-360:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: customer-360/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rebuild report data from the extract
+        run: python 01_build_report_data.py
+      - name: Fail if report data differs from what the script produces
+        run: git diff --exit-code -- ../dashboard/data.js ../data/
+      - name: Run data quality checks
+        run: python 02_data_quality.py
+      - name: Publish report to the run summary
+        if: always()
+        run: cat ../data_quality/dq_report.md >> "$GITHUB_STEP_SUMMARY"
